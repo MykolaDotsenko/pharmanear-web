@@ -10,6 +10,7 @@
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <script src="./src/theme-init.js"></script>
     <link rel="stylesheet" href="./src/style.css" />
+    <link rel="stylesheet" href="./src/radar.css" />
     <script type="module" src="./src/app.js"></script>
   </head>
   <body>
@@ -212,6 +213,8 @@
           <p id="map-privacy"></p>
           <div id="map-frame"></div>
         </section>
+        <button id="open-radar" class="secondary" type="button" aria-controls="radar-host" aria-expanded="false" hidden>Pharmacy radar</button>
+        <div id="radar-host"></div>
         <ol id="list" aria-label="Pharmacies by distance"></ol>
         <div class="result-tools" id="result-tools" hidden>
           <button
