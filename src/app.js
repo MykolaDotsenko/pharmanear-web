@@ -296,7 +296,9 @@ function pharmacyRow(pharmacy, index, entrance, today, results) {
   }
   info.append(hoursLine(pharmacy, today));
   if (review) {
-    const date = review.checked && new Intl.DateTimeFormat(lang, { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date(review.checked));
+    const date =
+      review.checked &&
+      new Intl.DateTimeFormat(lang, { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date(review.checked));
     const source = element('a', 'hours-source', date ? tr('sourceChecked') + ' ' + date : tr('sourceLink'));
     source.href = review.url;
     source.rel = 'noreferrer';
@@ -355,7 +357,9 @@ function renderResults() {
   shownResult = result;
   shownCount = visible.length;
   const today = finnishToday();
-  list.append(...visible.map((pharmacy, index) => pharmacyRow(pharmacy, index, index - seen, today, result.results)));
+  list.append(
+    ...visible.map((pharmacy, index) => pharmacyRow(pharmacy, index, index - seen, today, result.results)),
+  );
   if (selected) {
     const button = previewButton(selected.id);
     if (button) button.closest('li').append(map.panel);
