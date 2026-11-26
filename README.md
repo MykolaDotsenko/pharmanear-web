@@ -53,3 +53,6 @@ Select Map preview to load an interactive OpenStreetMap view for that pharmacy. 
 Automated axe checks target serious/critical WCAG A/AA issues on the idle and results screens; a manual conformance review remains necessary.
 
 The optional-in-time Christmas accent is visible November 25–January 6, based on the device's local calendar. It uses decorative SVG only, makes no extra network requests, and disappears with the introductory artwork after search.
+
+## Architecture
+See [architecture notes](docs/architecture.md) for module boundaries, dependency direction and official platform references.
