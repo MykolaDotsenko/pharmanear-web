@@ -32,6 +32,15 @@ test('every searchable city has a display name in every language', () => {
   assert.equal(messages.fi.cities.Turku, 'Turku');
 });
 
+test('result counts have the plural forms each language selects', () => {
+  for (const [language, copy] of Object.entries(messages)) {
+    for (const count of [0, 1, 2, 5, 21]) {
+      const form = new Intl.PluralRules(language).select(count);
+      assert.ok(copy.resultCount[form], `${language} ${count} → ${form}`);
+    }
+  }
+});
+
 test('browser language preferences choose the first supported language', () => {
   assert.equal(preferredLanguage(['fi-FI', 'en-US']), 'fi');
   assert.equal(preferredLanguage(['de-DE', 'sv-FI', 'fi']), 'sv');

@@ -235,7 +235,7 @@ test.describe('automated accessibility checks', () => {
     await expect(page).toHaveTitle('PharmaNear — Hitta ett apotek');
     await expect(page.locator('#city option[value="Turku"]')).toHaveText('Åbo');
     await page.locator('#search-label').click();
-    await expect(page.getByRole('status')).toContainText('Åbo');
+    await expect(page.getByRole('status')).toHaveText('2 kartlagda apotek · Åbo');
   });
 });
 
@@ -362,6 +362,7 @@ test('mobile search keeps details collapsed and preserves readable hours', async
   await page.goto('/');
   await page.locator('#search-label').click();
   await expect(page.locator('#list li')).toHaveCount(1);
+  await expect(page.getByRole('status')).toHaveText('1 mapped pharmacy · Turku');
   await expect(page.locator('#result-details')).not.toHaveAttribute('open', '');
   await expect(page.locator('.hours-value')).toHaveText('Mo-Fr 09:00-18:00 · Sa 10:00-14:00');
   await page.locator('#result-details summary').click();

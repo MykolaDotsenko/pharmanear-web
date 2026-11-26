@@ -75,7 +75,7 @@ Formatting is checked in CI: `npm run format:check`, or `npm run format` to fix.
 
 ## Verification
 
-Every push runs formatting, 40 unit tests, 24 Playwright tests (user flows, every axe WCAG 2.2 A/AA and
+Every push runs formatting, 41 unit tests, 24 Playwright tests (user flows, every axe WCAG 2.2 A/AA and
 best-practice rule in light, dark, Christmas, Finnish, Swedish and 320 px layouts, keyboard order) and the
 production build. Separate workflows run the real catalog in a browser, rebuild the catalog weekly and check
 the deployed data after each publication. [docs/review.md](docs/review.md) records what is verified

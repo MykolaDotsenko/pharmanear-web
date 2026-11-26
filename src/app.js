@@ -200,7 +200,9 @@ function renderResults() {
   }
 
   const place = origin === 'device' ? tr('device') : tr('cities')[origin];
-  $('status').textContent = `${result.results.length} ${tr('resultCount')} · ${place}`;
+  const count = result.results.length;
+  const noun = tr('resultCount')[new Intl.PluralRules(lang).select(count)] ?? tr('resultCount').other;
+  $('status').textContent = `${count} ${noun} · ${place}`;
   $('source-note').textContent = [
     result.source === 'catalog' ? `${tr('catalogDate')}: ${result.sourceDate.slice(0, 10)}` : '',
     result.covered ? '' : tr('limited'),
