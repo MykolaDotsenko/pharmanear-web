@@ -1,5 +1,9 @@
 import {test,expect} from '@playwright/test';
 const fixture={elements:[{type:'node',id:1,lat:60.47,lon:22.28,tags:{amenity:'pharmacy',name:'Far pharmacy'}},{type:'node',id:2,lat:60.452,lon:22.267,tags:{amenity:'pharmacy',name:'Near pharmacy','addr:street':'Example street'}}]};
+// Keep existing live-provider mocks independent of the production catalog.
+test.beforeEach(async ({ page }) => {
+  await page.route('**/data/finland-pharmacies.json', route => route.fulfill({ status: 404 }));
+});
 const endpoint=/^https:\/\/(overpass-api\.de|overpass\.private\.coffee)\/api\/interpreter$/;
 const fulfill=(route,json)=>route.fulfill({json,headers:{'access-control-allow-origin':'*'}});
 test('idle is private, search orders results, accessible map link and locale',async({page})=>{
@@ -125,4 +129,15 @@ test('independent provider recovers from a primary outage',async({page})=>{
  await page.goto('/');await page.locator('#search-label').click();
  await expect(page.locator('#list li').first()).toContainText('Near pharmacy');
  expect(primary).toBe(1);expect(backup).toBe(1);
+});
+
+test('local catalog renders results while both live providers are unavailable',async({page})=>{
+ await page.clock.setFixedTime(new Date('2026-11-26T12:00:00Z'));
+ let liveRequests=0;
+ await page.route(endpoint,route=>{liveRequests++;return route.abort();});
+ await page.route('**/data/finland-pharmacies.json',route=>route.fulfill({json:{...fixture,schema:1,region:'FI',license:'ODbL-1.0',sourceDate:'2026-11-25T00:00:00Z'}}));
+ await page.goto('/');await page.locator('#search-label').click();
+ await expect(page.locator('#list li').first()).toContainText('Near pharmacy');
+ await expect(page.locator('#status')).toContainText('OSM catalog date: 2026-11-25');
+ expect(liveRequests).toBe(0);
 });
