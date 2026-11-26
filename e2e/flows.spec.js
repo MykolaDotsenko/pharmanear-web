@@ -576,11 +576,11 @@ test('on a phone the actions share one line and nothing widens the page', async 
   await page.goto('/');
   await page.locator('#search-label').click();
   const row = page.locator('#list li').first();
-  // Same row: map preview, radar and the OpenStreetMap link overlap vertically.
-  const boxes = await row
-    .locator('.pharmacy-action')
-    .locator('button, a')
-    .evaluateAll(items => items.map(item => item.getBoundingClientRect().toJSON()));
+  // Same row: map preview, radar and the OpenStreetMap link overlap vertically. evaluateAll does not wait,
+  // so the three actions must be on the page first.
+  const actions = row.locator('.pharmacy-action').locator('button, a');
+  await expect(actions).toHaveCount(3);
+  const boxes = await actions.evaluateAll(items => items.map(item => item.getBoundingClientRect().toJSON()));
   expect(boxes).toHaveLength(3);
   for (const box of boxes.slice(1)) {
     expect(box.y).toBeLessThan(boxes[0].y + boxes[0].height);
