@@ -4,7 +4,7 @@ import { cities, search } from './core.js';
  * Owns one search operation and one immutable UI snapshot.
  * No DOM, network globals, or persisted coordinates. Dependencies are injected.
  */
-export function createSearchController({ fetcher, geolocation, onChange = () => {} }) {
+export function createSearchController({ fetcher, lookup = (point, signal) => search(point, fetcher, signal), geolocation, onChange = () => {} }) {
   let state = Object.freeze({ status: 'idle', result: null, origin: '', busy: false, canRetry: false });
   let active = null;
   let lastAction = null;
@@ -36,7 +36,7 @@ export function createSearchController({ fetcher, geolocation, onChange = () => 
     if (active !== job) return;
     if (state.status !== 'loading') publish('loading', origin);
     try {
-      const result = await search(point, fetcher, job.signal);
+      const result = await lookup(point, job.signal);
       finish(job, result.results.length ? 'found' : 'empty', origin, result);
     } catch {
       finish(job, 'error', origin);
