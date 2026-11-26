@@ -81,10 +81,14 @@ network.
 
 ## Pharmacy radar
 
-Each result card has a **Radar** button; the radar opens inside that card, pointing to its pharmacy, and moves with the card when rows are re-rendered. Only one radar or map is open at a time. The radar is loaded on first use. `radar-view.js` first explains what it uses and asks for nothing; the
-**Start radar** click requests compass access (Safari shows that prompt only inside a click) and starts
-`radar-session.js`, which owns a high-accuracy location watch, the orientation listeners and a screen wake
-lock.
+Each result card has a **Radar** button. One press opens the radar inside that card and starts it: the click
+asks for compass access (Safari shows that prompt only inside a click, so `row-radar.js` asks before the view
+loads), and `radar-view.js` starts `radar-session.js`, which owns a high-accuracy location watch, the
+orientation listeners and a screen wake lock. Nothing is asked before that press. The radar shows only the
+card's pharmacy: the distance and the way to turn come first, large, then the dial, which is drawn at once
+while the first fix is awaited, and the panel scrolls itself into view, so nothing needs a second press or a
+scroll. Wide enough, the words sit beside the dial. It moves with the card when rows are re-rendered; only
+one radar or map is open at a time, and the view is loaded on first use.
 
 - **Lifetime.** Closing the radar, a new search, a language change or leaving the page releases all of it.
   While the page is hidden the watch is cleared and the wake lock released; a denied location ends the session
@@ -97,7 +101,7 @@ lock.
   fix, otherwise two fixes far enough apart; otherwise the chart is north-up and directions are cardinal.
   With reduced motion the chart always stays north-up, and the words still say where to turn.
 - **Cost.** Compass events can arrive sixty times a second; the view redraws at most once per animation
-  frame, and the pharmacy chooser keeps the search order so live updates never rebuild an open picker.
+  frame.
 - **Accessibility.** The chart is hidden from assistive technology; a status line and a throttled live
   region carry the same information. Forced colours draw the target in `Highlight`.
 - **Permissions.** `vercel.json` names `accelerometer`, `gyroscope` and `magnetometer` for this origin only,

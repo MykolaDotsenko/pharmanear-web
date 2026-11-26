@@ -1,21 +1,5 @@
 import { degrees, movementHeading, orientationHeading, smoothHeading } from './radar-geometry.js';
 
-/**
- * Asks for compass access where the browser requires it (iOS Safari). Call it inside the click that starts
- * the radar: Safari shows its prompt only during a user gesture. Resolves to whether the compass may be read.
- */
-export function requestCompass(api = globalThis.DeviceOrientationEvent) {
-  if (typeof api?.requestPermission !== 'function') return Promise.resolve(Boolean(api));
-  try {
-    return api.requestPermission(true).then(
-      value => value === 'granted',
-      () => false,
-    );
-  } catch {
-    return Promise.resolve(false);
-  }
-}
-
 // A fix older than this is no longer live, and a direction of travel older than this is dropped.
 const staleAfter = 15_000;
 

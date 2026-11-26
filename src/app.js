@@ -40,8 +40,6 @@ const radar = createRowRadar({
       pharmacies: state.result.results,
       language: lang,
       text: tr('radarView'),
-      unnamed: tr('unnamed'),
-      mapLabel: tr('map'),
       reducedMotion,
       loading: tr('radarLoading'),
       failed: tr('radarError'),
