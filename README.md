@@ -18,6 +18,10 @@ affiliated with Treat Health and not medical advice.
   always labelled as unverified and never turned into an "open now" claim; links to Apteekki.fi.
 - English, Finnish and Swedish, starting in the browser's preferred language; a light and dark theme that
   follows the system until you choose one; reduced motion.
+- Depth and motion done by the browser: a frosted sticky header, result cards that arrive in sequence and
+  follow the pointer with a soft light, a drifting aurora behind the hero, smooth disclosures, and a theme
+  change that spreads in a circle from its button (View Transitions). Each is progressive enhancement, and
+  reduced motion turns all of it off.
 - From 25 November to 6 January: a Christmas palette, a string of lights, and optional snowfall and a short
   _Jingle Bells_ (public domain) played through the Web Audio API. Neither starts on its own, snow stays still
   with reduced motion, and no audio file or other asset is downloaded.

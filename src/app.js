@@ -16,6 +16,9 @@ const systemDark = matchMedia('(prefers-color-scheme: dark)');
 let lang = preferredLanguage(navigator.languages);
 let expanded = false;
 let selected = null;
+// The result set on screen and how many of its rows the visitor has already seen arrive.
+let shownResult = null;
+let shownCount = 0;
 const tr = key => messages[lang][key];
 
 // The map panel moves into the selected row, so it is kept by reference rather than looked up by id.
@@ -199,9 +202,14 @@ function hoursLine(pharmacy) {
   return hours;
 }
 
-function pharmacyRow(pharmacy, index) {
+/** `entrance` is the row's place among the rows arriving now, or negative for a row already on screen. */
+function pharmacyRow(pharmacy, index, entrance) {
   const name = pharmacy.name || tr('unnamed');
   const row = element('li', index === 0 ? 'pharmacy closest' : 'pharmacy');
+  if (entrance >= 0) {
+    row.classList.add('arriving');
+    row.style.setProperty('--i', String(entrance));
+  }
 
   const rank = element('span', 'rank', String(index + 1).padStart(2, '0'));
   rank.setAttribute('aria-hidden', 'true');
@@ -254,7 +262,11 @@ function renderResults() {
   $('source-notes').replaceChildren(...notes.filter(Boolean).map(note => element('p', '', note)));
 
   const visible = result.results.slice(0, expanded ? maximumShown : initialLimit);
-  list.append(...visible.map(pharmacyRow));
+  // Rows are rebuilt on every render; only new results and newly shown rows animate in, not a language switch.
+  const seen = result === shownResult ? shownCount : 0;
+  shownResult = result;
+  shownCount = visible.length;
+  list.append(...visible.map((pharmacy, index) => pharmacyRow(pharmacy, index, index - seen)));
   if (selected) {
     const button = previewButton(selected.id);
     if (button) button.closest('li').append(map.panel);
@@ -286,14 +298,39 @@ function applyTheme(theme) {
     .trim();
 }
 
-$('theme-toggle').addEventListener('click', () => {
+/** The new theme spreads in a circle from the button where the browser supports view transitions. */
+function revealTheme(theme, button) {
+  if (!document.startViewTransition || reducedMotion.matches) {
+    applyTheme(theme);
+    return;
+  }
+  const { left, top, width, height } = button.getBoundingClientRect();
+  const x = left + width / 2;
+  const y = top + height / 2;
+  const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+  const transition = document.startViewTransition(() => applyTheme(theme));
+  transition.ready
+    .then(() =>
+      root.animate(
+        { clipPath: [`circle(0 at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] },
+        {
+          duration: 550,
+          easing: 'cubic-bezier(0.2, 0.7, 0.2, 1)',
+          pseudoElement: '::view-transition-new(root)',
+        },
+      ),
+    )
+    .catch(() => {});
+}
+
+$('theme-toggle').addEventListener('click', event => {
   const theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
   try {
     localStorage.setItem(themeKey, theme);
   } catch {
     // Without storage the choice lasts until the page is closed.
   }
-  applyTheme(theme);
+  revealTheme(theme, event.currentTarget);
 });
 systemDark.addEventListener('change', event => {
   if (!storedTheme()) applyTheme(event.matches ? 'dark' : 'light');
@@ -326,6 +363,16 @@ function setUpSeason() {
     }
   });
 }
+
+// A soft light follows the pointer across result cards (hover-capable pointers only; see style.css).
+$('list').addEventListener('pointermove', event => {
+  if (event.pointerType !== 'mouse') return;
+  const card = event.target.closest('.pharmacy');
+  if (!card) return;
+  const box = card.getBoundingClientRect();
+  card.style.setProperty('--mx', `${event.clientX - box.left}px`);
+  card.style.setProperty('--my', `${event.clientY - box.top}px`);
+});
 
 $('locate').addEventListener('click', () => controller.locate());
 $('city-form').addEventListener('submit', event => {

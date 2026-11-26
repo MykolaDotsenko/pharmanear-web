@@ -266,6 +266,52 @@ test('task-first results progressively disclose more pharmacies', async ({ page 
   await page.getByRole('link', { name: 'Change location' }).click();
   await expect(page.locator('#locate')).toBeFocused();
 });
+test('only rows the visitor has not seen yet animate in', async ({ page }) => {
+  const elements = Array.from({ length: 8 }, (_, i) => ({
+    type: 'node',
+    id: i + 1,
+    lat: 60.4518 + i * 0.0001,
+    lon: 22.2666,
+    tags: { amenity: 'pharmacy', name: 'Pharmacy ' + (i + 1) },
+  }));
+  await page.route(endpoint, r => fulfill(r, { elements }));
+  await page.goto('/');
+  await page.locator('#search-label').click();
+  const arriving = page.locator('#list li.arriving');
+  const order = () => arriving.evaluateAll(rows => rows.map(row => row.style.getPropertyValue('--i')));
+  await expect(page.locator('#list li')).toHaveCount(5);
+  expect(await order()).toEqual(['0', '1', '2', '3', '4']);
+
+  // A language switch rebuilds the rows, but they are the same results and stay still.
+  await page.locator('#language').selectOption('fi');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'fi');
+  await expect(arriving).toHaveCount(0);
+
+  await page.locator('#show-all').click();
+  await expect(page.locator('#list li')).toHaveCount(8);
+  expect(await order()).toEqual(['0', '1', '2']);
+});
+test('the sticky header never hides the keyboard focus', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-11-26T12:00:00Z'));
+  await page.setViewportSize({ width: 1280, height: 600 });
+  await page.route(endpoint, r => fulfill(r, fixture));
+  await page.goto('/');
+  await page.locator('#search-label').click();
+  await expect(page.locator('#list li')).toHaveCount(2);
+  await page.locator('footer a').focus();
+  const first = page.getByRole('button', { name: 'Map preview: Near pharmacy' });
+  for (
+    let step = 0;
+    step < 12 && !(await first.evaluate(button => button === document.activeElement));
+    step++
+  ) {
+    await page.keyboard.press('Shift+Tab');
+  }
+  await expect(first).toBeFocused();
+  const header = await page.locator('.topbar').boundingBox();
+  const focused = await first.boundingBox();
+  expect(focused.y).toBeGreaterThanOrEqual(header.y + header.height);
+});
 test('recovery offers retry and independent directory', async ({ page }) => {
   let fail = true;
   await page.route(endpoint, r =>
@@ -420,6 +466,27 @@ test.describe('theme', () => {
     await page.reload();
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   });
+
+  for (const motion of ['no-preference', 'reduce']) {
+    test(`the theme change uses a view transition only without reduced motion (${motion})`, async ({
+      page,
+    }) => {
+      await page.emulateMedia({ colorScheme: 'light', reducedMotion: motion });
+      await page.addInitScript(() => {
+        window.viewTransitions = 0;
+        const start = document.startViewTransition?.bind(document);
+        if (start)
+          document.startViewTransition = update => {
+            window.viewTransitions++;
+            return start(update);
+          };
+      });
+      await page.goto('/');
+      await page.locator('#theme-toggle').click();
+      await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+      expect(await page.evaluate(() => window.viewTransitions)).toBe(motion === 'reduce' ? 0 : 1);
+    });
+  }
 });
 
 test.describe('season', () => {

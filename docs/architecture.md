@@ -43,6 +43,30 @@ network.
   only from their toggle buttons (`aria-pressed`), snow is drawn once and kept still under reduced motion and
   pauses in hidden tabs, and the melody is a synthesized public-domain tune with no downloaded asset.
 
+## Visual layer
+
+Depth and motion are CSS, with three small hooks in `app.js`; nothing is added to the bundle and nothing
+needs a relaxed CSP, because the script only sets custom properties through the CSSOM.
+
+- **Tokens.** Radii, two tinted shadow levels and one easing curve live beside the colour tokens, so each
+  theme and the season restyle them together.
+- **Sticky glass header** (wide screens): `backdrop-filter`, with a shadow that a scroll-driven animation
+  fades in over the first 96 px. `scroll-padding-top` keeps anything scrolled to, keyboard focus included,
+  below the header (WCAG 2.4.11).
+- **Result cards** arrive in sequence (`--i`). Rows are rebuilt on every render, so `app.js` marks only rows
+  the visitor has not seen: a new result set, or the rows _Show more_ adds, but not a language switch. On
+  hover-capable mouse pointers a soft light follows the pointer (`--mx`, `--my`).
+- **Aurora** behind the hero: three radial gradients on a masked pseudo-element whose drift stays inside its
+  box, so it never widens the page.
+- **Theme reveal**: `document.startViewTransition` with the new theme clipped to a circle growing from the
+  toggle. Without the API, or with reduced motion, the theme changes at once.
+- **Smooth disclosures** (`::details-content` with `interpolate-size`) and the map's fade-in (`@starting-style`)
+  apply only where the browser supports them.
+
+Gradient buttons keep their solid accent as `background-color` underneath, and the gradient only darkens it,
+so contrast never falls below the token's. Text over the aurora and the card backgrounds measures at least
+5.4:1 on rendered pixels in every theme and season.
+
 Dependencies point inward, from the UI to the controller and the domain. There is no global store, event bus
 or persistence of coordinates.
 
