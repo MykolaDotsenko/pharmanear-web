@@ -5,14 +5,14 @@ page.
 
 ## Automated on every push (Web CI)
 
-| Check                  | What it proves                                                                                                                                                                                          |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm run format:check` | Consistent formatting (Prettier 3.6.2)                                                                                                                                                                  |
-| 41 unit tests          | Geometry, ranking, coverage, normalization, catalog freshness and refresh, transport fallback and cancellation, controller lifecycle, translations and plural forms, local server headers and allowlist |
-| 24 Playwright tests    | Privacy before consent, rounded coordinates, ordering, cancellation, recovery, map focus handling, hours, seasonal palette, local catalog with providers down, browser language                         |
-| axe-core 4.10.3        | No violation of any WCAG 2.0–2.2 A/AA or best-practice rule, at any impact, in light, dark and Christmas themes (idle, results, details, map) and in Finnish and Swedish at 320 px                      |
-| Keyboard test          | The start page's tab order follows the page; each stop shows a focus outline of at least 2 px                                                                                                           |
-| Build                  | `npm run build` succeeds                                                                                                                                                                                |
+| Check                  | What it proves                                                                                                                                                                                                                                                                                                  |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run format:check` | Consistent formatting (Prettier 3.6.2)                                                                                                                                                                                                                                                                          |
+| 46 unit tests          | Geometry, ranking, coverage, normalization, catalog freshness and refresh, transport fallback and cancellation, controller lifecycle, translations and plural forms, opening-hours formatting, local server headers and allowlist                                                                               |
+| 29 Playwright tests    | Privacy before consent, rounded coordinates, ordering, cancellation, recovery, the map inside its row and focus handling, localized hours, theme toggle and its memory, seasonal palette, snow and melody only on request, snow still under reduced motion, local catalog with providers down, browser language |
+| axe-core 4.10.3        | No violation of any WCAG 2.0–2.2 A/AA or best-practice rule, at any impact, in light, dark and Christmas themes (idle, results, details, map) and in Finnish and Swedish at 320 px                                                                                                                              |
+| Keyboard test          | The start page's tab order follows the page; each stop shows a focus outline of at least 2 px                                                                                                                                                                                                                   |
+| Build                  | `npm run build` succeeds                                                                                                                                                                                                                                                                                        |
 
 ## Automated on a schedule or on demand
 
@@ -29,6 +29,7 @@ page.
 - [ ] Physical phone: location permission prompt, denial, and a known location compared with an independent
       map.
 - [ ] Native speakers review the Finnish and Swedish copy.
+- [ ] Listen to the melody on phone and laptop speakers: volume and that it stops at once when toggled off.
 - [ ] After the first scheduled publication: a bot commit on `main`, a Vercel deployment, and a green
       production smoke.
 

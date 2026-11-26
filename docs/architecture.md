@@ -10,7 +10,11 @@ app.js ─┬─► search-controller.js ─► core.js
         ├─► catalog.js ─┬─────────► core.js
         │               └─► provider.js
         ├─► core.js            (map URLs)
+        ├─► hours.js           (opening hours)
+        ├─► festive.js         (lights, snow, melody)
         └─► strings.js
+
+theme-init.js                  (classic script in <head>, before the first paint)
 ```
 
 `app.js` passes `catalog.js`'s lookup to the controller, so the controller never imports the catalog or the
@@ -28,6 +32,16 @@ network.
 - **`app.js`** renders that state and binds events. It holds only presentation state: language, expanded list
   and the open map.
 - **`strings.js`** holds all copy; a unit test keeps the three languages' keys identical.
+- **`hours.js`** turns the common OpenStreetMap opening-hours syntax (weekday ranges and lists, public holidays,
+  time ranges, `off`, `24/7`) into the interface language; about 98 % of the catalog's values. Anything else is
+  shown as mapped. It never evaluates a rule against today: the data is unverified, and an "open now" would be
+  wrong on public holidays.
+- **`theme-init.js`** is a classic, blocking script in `<head>`: it sets `data-theme` (the stored choice, else
+  the system's) and `data-season` on `<html>` before the first paint, so neither flashes. The stylesheet reads
+  only those attributes; `app.js` keeps following the system theme until the visitor chooses one.
+- **`festive.js`** builds the string of lights and drives the snow canvas and the Web Audio melody. Both start
+  only from their toggle buttons (`aria-pressed`), snow is drawn once and kept still under reduced motion and
+  pauses in hidden tabs, and the melody is a synthesized public-domain tune with no downloaded asset.
 
 Dependencies point inward, from the UI to the controller and the domain. There is no global store, event bus
 or persistence of coordinates.

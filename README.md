@@ -12,11 +12,15 @@ affiliated with Treat Health and not medical advice.
 - Searches a dated national OpenStreetMap catalog **on the device**: no coordinates leave the browser.
 - Falls back to live Overpass queries only when the catalog cannot serve the area, sending a coordinate
   rounded to two decimals and widening from 3 to 10 to 30 km.
-- Ranks by straight-line distance, shows up to 20 results (5 at first) and opens a pharmacy in an embedded
-  map or on openstreetmap.org on request.
-- Shows community-mapped opening hours, always labelled as unverified, and links to Apteekki.fi.
-- English, Finnish and Swedish, starting in the browser's preferred language; dark mode; reduced motion; a
-  quiet seasonal palette from 25 November to 6 January.
+- Ranks by straight-line distance with the distance beside each name, shows up to 20 results (5 at first)
+  and opens a pharmacy's map inside its row or on openstreetmap.org on request.
+- Shows community-mapped opening hours in the interface language (`ma–pe 09.00–20.00`, `mån–fre 09:00–20:00`),
+  always labelled as unverified and never turned into an "open now" claim; links to Apteekki.fi.
+- English, Finnish and Swedish, starting in the browser's preferred language; a light and dark theme that
+  follows the system until you choose one; reduced motion.
+- From 25 November to 6 January: a Christmas palette, a string of lights, and optional snowfall and a short
+  _Jingle Bells_ (public domain) played through the Web Audio API. Neither starts on its own, snow stays still
+  with reduced motion, and no audio file or other asset is downloaded.
 - Handles denied permission, slow or failed providers, cancellation and empty areas without ever showing a
   stale result.
 
@@ -27,7 +31,8 @@ Monday by GitHub Actions. Its source date is shown under _About these results_; 
 is never used. See [data/README.md](data/README.md) and
 [ADR 0002](docs/0002-local-catalog-and-weekly-refresh.md).
 
-No account, analytics, cookies, persistent storage or location history. The live fallback and the optional
+No account, analytics, cookies or location history; the only thing stored is the theme you pick, in this
+browser. The live fallback and the optional
 map are third-party services that receive normal network metadata, including the IP address. OpenStreetMap can
 be incomplete, a building centre is not an entrance, and the nearest mapped pharmacy is not a guarantee of the
 nearest real one. Production use would need an SLA-backed or self-hosted data source and a licensing review;
@@ -65,7 +70,10 @@ Formatting is checked in CI: `npm run format:check`, or `npm run format` to fix.
 | `src/catalog.js`              | Local catalog lookup, freshness rules and refresh, live fallback         |
 | `src/provider.js`             | Overpass transport: timeout, cancellation, one independent fallback      |
 | `src/search-controller.js`    | Search lifecycle: one operation at a time, stale results never published |
-| `src/app.js`                  | DOM rendering and events                                                 |
+| `src/app.js`                  | DOM rendering, events and the theme toggle                               |
+| `src/hours.js`                | Localized formatting of common OpenStreetMap opening hours               |
+| `src/festive.js`              | Seasonal string of lights, snowfall and melody                           |
+| `src/theme-init.js`           | Sets the theme and season before the first paint                         |
 | `src/strings.js`              | English, Finnish and Swedish copy and the browser-language default       |
 | `server.mjs`                  | Loopback development server using the headers in `vercel.json`           |
 | `scripts/`                    | Static build, shared file list and the catalog converter                 |
