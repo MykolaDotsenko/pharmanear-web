@@ -24,5 +24,11 @@
         }
       ]
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/data/current-finland-pharmacies.json",
+      "destination": "https://raw.githubusercontent.com/MykolaDotsenko/pharmanear-web/main/data/finland-pharmacies.json"
+    }
   ]
 }
