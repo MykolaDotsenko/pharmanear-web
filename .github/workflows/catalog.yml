@@ -66,6 +66,7 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: write
+      actions: write
     steps:
       # Commit on top of the latest main, not the commit that started the run.
       - uses: actions/checkout@v4
@@ -95,3 +96,7 @@ jobs:
           if git diff --cached --quiet; then exit 0; fi
           git commit -m "Refresh Finnish pharmacy catalog"
           git push origin HEAD:main
+      - name: Run CI for the published snapshot
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run ci.yml --ref main

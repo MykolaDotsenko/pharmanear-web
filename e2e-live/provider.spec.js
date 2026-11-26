@@ -1,6 +1,10 @@
 import { test, expect } from '@playwright/test';
 
 test('real Finnish catalog works for every city with Overpass unavailable', async ({ page }) => {
+  // Match the bundled extract's date without depending on a public refresh service.
+  const catalog = await page.request.get('/data/finland-pharmacies.json');
+  const { sourceDate } = await catalog.json();
+  await page.clock.setFixedTime(new Date(sourceDate));
   let liveRequests = 0;
   await page.route('**/api/interpreter', route => {
     liveRequests++;

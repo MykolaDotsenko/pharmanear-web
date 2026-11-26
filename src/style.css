@@ -360,7 +360,7 @@ h2 {
       color-mix(in oklab, var(--aurora-3) 45%, transparent),
       transparent 70%
     );
-  animation: aurora 18s ease-in-out infinite;
+  animation: aurora 4s ease-in-out 1;
 }
 body[data-outcome] .hero::before {
   opacity: calc(var(--aurora-strength) * 0.55);
@@ -915,7 +915,7 @@ body[data-outcome] h1 {
   height: 12px;
   border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
   background: var(--accent);
-  animation: twinkle 2.6s ease-in-out infinite;
+  animation: twinkle 2.6s ease-in-out 1;
 }
 .garland-bulbs i:nth-child(3n + 2) {
   background: var(--gold);

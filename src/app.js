@@ -359,7 +359,7 @@ function setUpSeason() {
     try {
       await melody.play();
     } catch {
-      melodyButton.setAttribute('aria-pressed', 'false');
+      melodyButton.setAttribute('aria-pressed', String(melody.playing));
     }
   });
 }
