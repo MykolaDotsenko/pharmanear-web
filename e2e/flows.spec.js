@@ -58,3 +58,16 @@ test('capture desktop and mobile screenshots with synthetic results',async({page
  await page.screenshot({path:testInfo.outputPath('desktop.png'),fullPage:true,animations:'disabled'});
  await page.setViewportSize({width:390,height:844});await page.screenshot({path:testInfo.outputPath('mobile.png'),fullPage:true,animations:'disabled'});
 });
+
+test.describe('automated accessibility checks',()=>{
+ test.use({bypassCSP:true});
+ test('no serious or critical axe WCAG A/AA issues in idle and results states',async({page})=>{
+  await page.route(endpoint,r=>fulfill(r,fixture));
+  await page.goto('/');
+  await page.addScriptTag({path:'node_modules/axe-core/axe.min.js'});
+  const audit=()=>page.evaluate(async()=>{const result=await window.axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']}});return result.violations.filter(v=>['serious','critical'].includes(v.impact)).map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)}));});
+  expect(await audit()).toEqual([]);
+  await page.locator('#search-label').click();await expect(page.locator('#list li')).toHaveCount(2);
+  expect(await audit()).toEqual([]);
+ });
+});
