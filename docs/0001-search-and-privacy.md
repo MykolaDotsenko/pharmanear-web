@@ -1,0 +1,15 @@
+# ADR 0001: bounded geospatial search with data minimization
+
+Status: accepted for the exercise; production validation pending.
+
+## Context
+The application must find pharmacies without requiring registration. The service should handle denial of location permission and unreliable networks. The search must not need a secret embedded in a client.
+
+## Decision
+Use Overpass `amenity=pharmacy` node/way/relation results, normalize and rank by Haversine distance against the original device position. Search around a coordinate rounded to two decimals with 3, 10 and 30 km radii. Stop when the closest result is inside the search circle after subtracting the centre offset; otherwise continue. This is a geometric coverage heuristic for mapped representative points, not a guarantee of data completeness. No persistent location history. No retry storms; bound requests and allow cancellation. Explicit fallback to city centres. No medical or opening-hours recommendations.
+
+## Alternatives
+Apple MapKit search alone is convenient but would make results inconsistent across platforms. Proprietary Places providers need credentials and contractual review. A prebuilt Finland-only dataset is robust offline but adds refresh and distribution obligations. A commercial or self-hosted EU service is preferred for production after legal, performance and data coverage assessment.
+
+## Consequences
+Simple architecture and no keys, but third-party availability and map accuracy are limitations. Rounding reduces precision shared externally but is not anonymization. Distances are estimates; users should verify opening hours and travel routes. Provider IP logging and retention have not been independently audited.
