@@ -16,4 +16,6 @@ The initial implementation, tests and ADR were generated with ChatGPT assistance
 - Run GitHub Actions; verify build and test results; perform human code review before applying.
 
 ## Known gaps
-No live provider smoke test, end-to-end UI automation, independent accessibility audit or production-grade availability guarantees. iOS full compilation needs Apple SDK. Do not represent these checks as passed until verified.
+No live provider smoke test, independent accessibility audit or production-grade availability guarantees. iOS full compilation needs Apple SDK. Do not represent these checks as passed until verified.
+ 
+Web browser tests now exist with mocked network responses; execution is tracked in CI. They do not replace live provider or manual accessibility checks.

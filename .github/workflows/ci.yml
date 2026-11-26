@@ -12,3 +12,6 @@ jobs:
           node-version: '22'
       - run: npm test
       - run: node --check src/app.js
+      - run: npm install --no-save --package-lock=false @playwright/test@1.56.1
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test --config e2e/playwright.config.js

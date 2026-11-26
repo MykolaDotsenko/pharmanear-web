@@ -32,7 +32,17 @@ Open http://localhost:4173. Geolocation requires HTTPS or localhost. A static HT
 - `.github/workflows/ci.yml`: automated checks on pushes and pull requests.
 
 ## Verification
-Nine automated core tests passed in Node 22; JavaScript syntax and local HTTP responses verified. Live Overpass requests and browser accessibility/device tests were not possible in the isolated environment. Run the manual checklist before submission.
+The original core implementation reported nine passing tests. The refreshed UI adds five Playwright scenarios with mocked Overpass responses; check the current GitHub Actions run for actual results. Live Overpass requests, independent accessibility review and real-device checks remain pending. Run the manual checklist before submission.
 
 ## Engineering process
 AI-assisted implementation was used. See [review checklist and limitations](docs/review.md). This is an initial candidate deliverable, not a claim of production certification.
+
+## Design
+The 2026 refresh draws on Finnish functionalism: paper and pine tones, an editorial serif heading, a decorative abstract contour illustration (not a geographic map), restrained motion, dark mode, numbered result rows and responsive controls. No tracking, web fonts or image requests. Motion respects reduced-motion preferences.
+
+Run browser tests after installing the pinned test-only dependency:
+```sh
+npm install --no-save --package-lock=false @playwright/test@1.56.1
+npx playwright install chromium
+npx playwright test --config e2e/playwright.config.js
+```

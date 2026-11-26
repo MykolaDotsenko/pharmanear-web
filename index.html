@@ -1,1 +1,59 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="referrer" content="no-referrer"><meta name="description" content="Find nearby pharmacies without an account."><title>PharmaNear — Find a pharmacy</title><link rel="stylesheet" href="./src/style.css"><script type="module" src="./src/app.js"></script></head><body><a class="skip" href="#main">Skip to content</a><header class="shell"><a class="brand" href="./"><span class="mark" aria-hidden="true">✚</span> PharmaNear</a><label class="language"><span id="language-label">Language</span><select id="language"><option value="en">English</option><option value="fi">Suomi</option><option value="sv">Svenska</option></select></label></header><main class="shell" id="main"><section class="hero"><p class="eyebrow" id="eyebrow">PHARMACY FINDER</p><h1 id="heading">Find a pharmacy near you.</h1><p class="intro" id="intro">Find the closest mapped pharmacies by straight-line distance. No account needed.</p><button id="locate" class="primary" type="button"><span aria-hidden="true">◎</span> <span id="locate-label">Use my location</span></button><p class="privacy" id="privacy">Only a location rounded to 2 decimal places is sent to OpenStreetMap’s Overpass service. Distances are calculated on your device.</p><form id="city-form"><label for="city" id="city-label">Or search from a city centre</label><div class="form-row"><select id="city" required><option>Turku</option><option>Helsinki</option><option>Tampere</option><option>Oulu</option><option>Vaasa</option></select><button type="submit" class="secondary" id="search-label">Search</button></div></form></section><section aria-labelledby="results-heading" class="results"><div class="result-header"><h2 id="results-heading">Nearby pharmacies</h2><button id="cancel" type="button" hidden>Cancel</button></div><p id="status" role="status" aria-live="polite" aria-atomic="true">Choose your location to start.</p><ol id="list" aria-label="Pharmacies by distance"></ol></section></main><footer class="shell"><p id="disclaimer">Distances are not walking routes. Check pharmacy opening hours before travelling. Map data can be incomplete.</p><a href="https://www.openstreetmap.org/copyright" rel="noreferrer">© OpenStreetMap contributors</a></footer></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta name="description" content="Find nearby pharmacies without an account.">
+  <meta name="theme-color" content="#f6f4ee">
+  <title>PharmaNear — Find a pharmacy</title>
+  <link rel="stylesheet" href="./src/style.css">
+  <script type="module" src="./src/app.js"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="shell masthead">
+    <a class="brand" href="./"><span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 4v16M4 12h16" stroke="currentColor" stroke-width="2.5" stroke-linecap="square"/></svg></span>PharmaNear<span class="brand-dot" aria-hidden="true">.</span></a>
+    <label class="language"><span id="language-label">Language</span><select id="language"><option value="en">English</option><option value="fi">Suomi</option><option value="sv">Svenska</option></select></label>
+  </header>
+  <main class="shell" id="main">
+    <section class="hero" aria-labelledby="heading">
+      <div class="hero-copy">
+        <p class="eyebrow" id="eyebrow">PHARMACY FINDER</p>
+        <h1 id="heading">Find a pharmacy near you.</h1>
+        <p class="intro" id="intro">Find the closest mapped pharmacies by straight-line distance. No account needed.</p>
+        <button id="locate" class="primary" type="button">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="7" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3" stroke="currentColor" stroke-width="1.5"/></svg>
+          <span id="locate-label">Use my location</span><span class="button-arrow" aria-hidden="true">↗</span>
+        </button>
+        <p class="privacy" id="privacy">Only a location rounded to 2 decimal places is sent to OpenStreetMap’s Overpass service. Distances are calculated on your device.</p>
+        <form id="city-form"><label for="city" id="city-label">Or search from a city centre</label><div class="form-row"><select id="city" required><option>Turku</option><option>Helsinki</option><option>Tampere</option><option>Oulu</option><option>Vaasa</option></select><button type="submit" class="secondary" id="search-label">Search</button></div></form>
+      </div>
+      <div class="landscape" aria-hidden="true">
+        <svg viewBox="0 0 440 450" preserveAspectRatio="xMidYMid slice" fill="none">
+          <rect width="440" height="450" class="land-base"/>
+          <path class="land-water" d="M440 0H165C99 71 172 106 112 171S-29 231 6 310s106 40 141 140h293Z"/>
+          <g class="contours" stroke-width="1">
+            <path d="M-20 26C127 115 22 197 138 258S268 360 214 470"/>
+            <path d="M-9 0C152 96 50 191 159 245S292 346 240 470"/>
+            <path d="M22-15C181 85 77 171 185 232S317 337 271 470"/>
+            <path d="M54-24C208 67 105 154 210 218S342 318 301 470"/>
+            <path d="M92-22C240 51 135 140 236 203S366 307 332 470"/>
+            <path d="M130-16C272 39 163 122 261 189S390 293 363 470"/>
+            <path d="M165-20C304 25 194 104 288 177S415 279 393 470"/>
+          </g>
+          <g class="locator-art"><circle cx="254" cy="207" r="65" class="art-ring"/><circle cx="254" cy="207" r="43" class="art-ring"/><circle cx="254" cy="207" r="23" class="art-disc"/><path d="M254 196v22m-11-11h22" stroke-width="2" class="art-cross"/></g>
+          <path class="art-ticks" d="M28 28h24m-24 0v24M412 422h-24m24 0v-24" stroke-width="1"/>
+        </svg>
+      </div>
+    </section>
+    <section aria-labelledby="results-heading" class="results" data-state="idle">
+      <div class="result-header"><h2 id="results-heading">Nearby pharmacies</h2><button id="cancel" class="text-button" type="button" hidden>Cancel</button></div>
+      <div class="status-line"><span class="status-dot" aria-hidden="true"></span><p id="status" role="status" aria-live="polite" aria-atomic="true">Choose your location to start.</p></div>
+      <div id="loading-art" class="loading-art" aria-hidden="true" hidden><i></i><i></i><i></i></div>
+      <ol id="list" aria-label="Pharmacies by distance"></ol>
+    </section>
+  </main>
+  <footer class="shell"><div class="footer-mark" aria-hidden="true">+</div><p id="disclaimer">Distances are not walking routes. Check pharmacy opening hours before travelling. Map data can be incomplete.</p><a href="https://www.openstreetmap.org/copyright" rel="noreferrer">© OpenStreetMap contributors</a></footer>
+</body>
+</html>
