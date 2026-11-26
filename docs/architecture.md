@@ -6,11 +6,15 @@ pharmacy does not need more, and every dependency it avoids is one less thing to
 ## Modules and dependency direction
 
 ```
-app.js ──► search-controller.js ──► core.js
-   │                ▲
-   └──► catalog.js ─┴──► provider.js
-   └──► strings.js
+app.js ─┬─► search-controller.js ─► core.js
+        ├─► catalog.js ─┬─────────► core.js
+        │               └─► provider.js
+        ├─► core.js            (map URLs)
+        └─► strings.js
 ```
+
+`app.js` passes `catalog.js`'s lookup to the controller, so the controller never imports the catalog or the
+network.
 
 - **`core.js`** is pure: geometry, OSM element validation, deterministic ranking, the search coverage rule and
   map URLs. No DOM, no network, no clock.
@@ -32,9 +36,10 @@ or persistence of coordinates.
 
 Live search queries a coordinate rounded to two decimals and ranks results by distance from the precise
 position, which never leaves the device. A radius proves the nearest mapped pharmacy only if that pharmacy is
-closer than the radius minus the rounding offset; otherwise the search widens. The national catalog contains
-every mapped pharmacy, so any result it returns within 30 km is proven nearest. Coverage is always relative to
-OpenStreetMap, not to the official register.
+closer than the radius minus the rounding offset; otherwise the search widens. The catalog contains every
+pharmacy mapped in Finland but none across the border, so near Sweden, Norway or Russia a closer pharmacy can
+be missing: catalog results therefore make no coverage claim and say that only pharmacies mapped in Finland
+are included. Coverage is always relative to OpenStreetMap, not to the official register.
 
 ## Catalog freshness
 

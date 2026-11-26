@@ -7,7 +7,8 @@
 
 - `sourceDate` is the extract's replication timestamp. The app shows it and refuses data older than 30 days.
 - Each element keeps its OSM type and id, a point (an area's bounding-box centre) and the tags `name`,
-  `addr:street`, `addr:housenumber`, `addr:city` and `opening_hours`.
+  `amenity`, `addr:street`, `addr:housenumber`, `addr:city` and `opening_hours`. The app ignores an
+  element without `amenity=pharmacy`.
 - The data is what OpenStreetMap contributors mapped, not the official register: some objects have no name, a
   few pharmacies are mapped twice (as a point and as a building), and opening hours can be out of date. They
   are shown as mapped rather than corrected silently.

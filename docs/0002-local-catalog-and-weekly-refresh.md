@@ -13,8 +13,8 @@ approximate location with a third party.
 Ship a national snapshot of OpenStreetMap pharmacies and search it on the device.
 
 - **Source.** The Geofabrik Finland extract, filtered with Osmium to `amenity=pharmacy` (nodes, ways and
-  relations). Areas are reduced to the centre of their bounding box. Only the name, address, opening hours
-  and OSM identifiers are kept.
+  relations). Areas are reduced to the centre of their bounding box. Only the `amenity` tag, name, address,
+  opening hours and OSM identifiers are kept.
 - **Validation.** The converter rejects a catalog with fewer than 300 or more than 3,000 objects, or without a
   pharmacy near each of the five city centres. The workflow rejects an extract older than seven days, older
   than the published one, or 20 % smaller than it.
