@@ -119,3 +119,37 @@ body[data-season="christmas"] .masthead{border-bottom-color:var(--winter-gold)}
 
 /* Keep seasonal details in the visible crop of the compact mobile artwork. */
 @media(max-width:760px){body[data-season="christmas"] .winter-pines{transform:translateY(-160px)}body[data-season="christmas"] .winter-gold{transform:translateY(100px)}body[data-season="christmas"] .winter-snow{transform:translateY(-150px)}}
+
+/* Seasonal palette: evergreen wayfinding, cranberry actions, candlelight paper.
+   Gold is decorative; all functional text retains a dark or light ink color. */
+body[data-season="christmas"] {
+  --paper:#fff8ed; --surface:#fffcf5; --ink:#302821; --muted:#62534a;
+  --pine:#194b38; --on-pine:#fffdf5; --line:#dbcab5; --focus:#a04e24;
+  --water:#a8c6b8; --land:#e9dfc8; --contour:#5f8b74; --wash:#e5eddf;
+  --cranberry:#8b263b; --on-cranberry:#fff8ed; --winter-gold:#aa7934;
+  --winter-snow:#fffdf5;
+  background:var(--paper); color:var(--ink); min-height:100vh;
+}
+body[data-season="christmas"] .primary {
+  background:var(--cranberry); border-color:var(--cranberry); color:var(--on-cranberry);
+}
+body[data-season="christmas"] .eyebrow,
+body[data-season="christmas"] .brand-dot { color:var(--cranberry); }
+body[data-season="christmas"] .mark { border-color:var(--cranberry); color:var(--cranberry); }
+body[data-season="christmas"] .landscape { border-color:var(--winter-gold); }
+body[data-season="christmas"] .art-disc { fill:var(--cranberry); }
+body[data-season="christmas"] .art-cross { stroke:var(--on-cranberry); }
+body[data-season="christmas"] .winter-pines { opacity:1; }
+body[data-season="christmas"] .winter-gold { stroke-width:2.2; }
+@media(prefers-color-scheme:dark){
+  body[data-season="christmas"] {
+    --paper:#202a24; --surface:#2d3830; --ink:#fff3df; --muted:#d3c9b9;
+    --pine:#b5d9bd; --on-pine:#172e24; --line:#59685b; --focus:#efb773;
+    --water:#315b49; --land:#414e38; --contour:#91ad85; --wash:#34473a;
+    --cranberry:#ae3e54; --on-cranberry:#fff9ee; --winter-gold:#e4bd76; --winter-snow:#f5ecdc;
+  }
+  body[data-season="christmas"] .eyebrow,
+  body[data-season="christmas"] .brand-dot,
+  body[data-season="christmas"] .mark { color:#f0a9b5; }
+  body[data-season="christmas"] .mark { border-color:#f0a9b5; }
+}
