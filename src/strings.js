@@ -4,6 +4,9 @@
  */
 export const messages = {
   en: {
+    radar: 'Pharmacy radar',
+    radarLoading: 'Opening radar…',
+    radarError: 'Radar could not open. Try again.',
     title: 'PharmaNear — Find a pharmacy',
     description: 'Find nearby pharmacies without an account.',
     language: 'Language',
@@ -66,6 +69,9 @@ export const messages = {
     },
   },
   fi: {
+    radar: 'Apteekkitutka',
+    radarLoading: 'Avataan tutkaa…',
+    radarError: 'Tutkaa ei voitu avata. Yritä uudelleen.',
     title: 'PharmaNear — Löydä apteekki',
     description: 'Löydä lähimmät apteekit ilman tiliä.',
     language: 'Kieli',
@@ -128,6 +134,9 @@ export const messages = {
     },
   },
   sv: {
+    radar: 'Apoteksradar',
+    radarLoading: 'Öppnar radarn…',
+    radarError: 'Radarn kunde inte öppnas. Försök igen.',
     title: 'PharmaNear — Hitta ett apotek',
     description: 'Hitta närmaste apotek utan konto.',
     language: 'Språk',

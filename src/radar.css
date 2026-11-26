@@ -1,0 +1,85 @@
+.radar-panel {
+  margin: 1rem 0;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--paper);
+}
+.radar-chart {
+  display: block;
+  width: min(100%, 360px);
+  margin: 1rem auto;
+  background: #173b35;
+  border-radius: 50%;
+}
+.radar-chart[hidden] {
+  display: none;
+}
+.radar-ring,
+.radar-axis {
+  fill: none;
+  stroke: #8bb6a5;
+  stroke-width: 0.25;
+}
+.radar-accuracy {
+  fill: #8ad3ff;
+  opacity: 0.2;
+}
+.radar-needle {
+  stroke: #d3f7c7;
+  stroke-width: 0.6;
+  stroke-dasharray: 2 1;
+}
+.radar-target {
+  fill: #9de4a1;
+  stroke: #fff;
+  stroke-width: 0.4;
+}
+.radar-marker {
+  fill: #4d8877;
+  stroke: #c6e7d5;
+  stroke-width: 0.4;
+}
+.radar-cross {
+  fill: none;
+  stroke: #102d27;
+  stroke-width: 0.7;
+  stroke-linecap: round;
+}
+.radar-user {
+  fill: #81d2ff;
+  stroke: #fff;
+  stroke-width: 0.5;
+}
+.radar-north {
+  fill: #fff;
+  font-size: 3px;
+  text-anchor: middle;
+}
+.radar-meta {
+  font-size: 0.875rem;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.radar-readout {
+  display: grid;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+.radar-readout p {
+  margin: 0;
+}
+.radar-panel select {
+  display: block;
+  max-width: 100%;
+  min-height: 44px;
+  margin: 0.4rem 0 1rem;
+}
+.radar-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
