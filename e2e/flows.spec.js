@@ -546,3 +546,31 @@ test.describe('browser language preference', () => {
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Löydä apteekki läheltäsi.');
   });
 });
+
+test('a second tap cancels a pending audio resume', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-12-20T12:00:00Z'));
+  await page.addInitScript(() => {
+    let release;
+    window.releaseAudio = () => release();
+    window.audioStarts = 0;
+    window.AudioContext = class {
+      resume() {
+        return new Promise(resolve => {
+          release = resolve;
+        });
+      }
+      createGain() {
+        window.audioStarts++;
+        throw new Error('Cancelled audio must not create nodes');
+      }
+    };
+  });
+  await page.goto('/');
+  const melody = page.getByRole('button', { name: 'Christmas melody' });
+  await melody.click();
+  await expect(melody).toHaveAttribute('aria-pressed', 'true');
+  await melody.click();
+  await expect(melody).toHaveAttribute('aria-pressed', 'false');
+  await page.evaluate(() => window.releaseAudio());
+  await expect.poll(() => page.evaluate(() => window.audioStarts)).toBe(0);
+});
