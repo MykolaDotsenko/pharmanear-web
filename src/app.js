@@ -203,13 +203,12 @@ function renderResults() {
   const count = result.results.length;
   const noun = tr('resultCount')[new Intl.PluralRules(lang).select(count)] ?? tr('resultCount').other;
   $('status').textContent = `${count} ${noun} · ${place}`;
-  $('source-note').textContent = [
-    result.source === 'catalog' ? `${tr('catalogDate')}: ${result.sourceDate.slice(0, 10)}` : '',
-    result.covered ? '' : tr('limited'),
-    result.results.length > maximumShown ? tr('shown') : '',
-  ]
-    .filter(Boolean)
-    .join(' ');
+  const notes =
+    result.source === 'catalog'
+      ? [`${tr('catalogDate')}: ${result.sourceDate.slice(0, 10)}`, tr('catalogScope')]
+      : [result.covered ? '' : tr('limited')];
+  if (result.results.length > maximumShown) notes.push(tr('shown'));
+  $('source-note').textContent = notes.filter(Boolean).join(' ');
 
   const visible = result.results.slice(0, expanded ? maximumShown : initialLimit);
   list.append(...visible.map(pharmacyRow));

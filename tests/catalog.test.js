@@ -23,13 +23,7 @@ test('local search returns dated mapped results without calling live providers',
   assert.equal(result.results[0].id, 'node/1');
   assert.equal(result.source, 'catalog');
   assert.equal(result.sourceDate, sourceDate);
-  assert.equal(result.covered, true);
-});
-test('a national snapshot proves the nearest mapped pharmacy only when one is in range', () => {
-  assert.equal(searchCatalog(catalog, point, now()).covered, true);
-  const remote = searchCatalog(catalog, { lat: 68.9, lon: 27.0 }, now());
-  assert.deepEqual(remote.results, []);
-  assert.equal(remote.covered, false);
+  assert.equal(result.covered, false);
 });
 test('stale or invalid snapshots do not produce results', () => {
   assert.throws(() => searchCatalog(catalog, point, Date.parse('2027-02-01')));

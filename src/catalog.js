@@ -44,12 +44,12 @@ export function searchCatalog(payload, origin, now = Date.now()) {
     throw new Error('Invalid or expired pharmacy catalog');
   }
   const results = normalize(payload, origin).filter(pharmacy => pharmacy.distance <= maxRadius);
-  // The snapshot holds every mapped pharmacy in Finland, so its first result is the nearest
-  // mapped one; unlike a bounded live query, the search area cannot hide a closer one.
+  // Coverage is not proven: the snapshot has no pharmacies across the border, so near it the
+  // nearest real pharmacy may be missing. The interface states that scope instead.
   return {
     results,
     radius: maxRadius,
-    covered: results.length > 0,
+    covered: false,
     source: 'catalog',
     sourceDate: payload.sourceDate,
   };

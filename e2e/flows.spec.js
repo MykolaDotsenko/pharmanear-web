@@ -342,7 +342,9 @@ test('local catalog renders results while both live providers are unavailable', 
   await page.locator('#search-label').click();
   await expect(page.locator('#list li').first()).toContainText('Near pharmacy');
   await page.locator('#result-details summary').click();
-  await expect(page.locator('#source-note')).toContainText('OSM catalog date: 2026-11-25');
+  await expect(page.locator('#source-note')).toHaveText(
+    'OSM catalog date: 2026-11-25 Only pharmacies mapped in Finland are included.',
+  );
   expect(liveRequests).toBe(0);
 });
 
