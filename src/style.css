@@ -86,3 +86,23 @@ footer p{margin:0;max-width:65ch}.footer-mark{color:var(--pine);font-weight:750;
 .pharmacy .hours{font-size:.8rem;max-width:48ch}
 .directory-link a{display:inline-flex;align-items:center;min-height:44px}
 @media(max-width:420px){.pharmacy-action{justify-content:flex-start;gap:.3rem 1rem}.pharmacy-action .distance{flex-basis:100%}}
+
+/* Task-first layout: the search never competes with the results. */
+.privacy-details{max-width:24rem;margin:.5rem 0 1.15rem;color:var(--muted);font-size:.85rem}
+.privacy-details summary{cursor:pointer;min-height:44px;display:list-item;align-content:center;color:var(--pine);text-underline-offset:3px;text-decoration:underline}
+.privacy-details summary:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+.privacy-details .privacy{margin:0 0 .7rem}
+.recovery,.result-tools{display:flex;align-items:center;gap:.6rem 1.25rem;flex-wrap:wrap;margin:1rem 0}
+.recovery{padding:1rem 0;border-block:1px solid var(--line)}
+.recovery a,.result-tools a{display:inline-flex;align-items:center;min-height:44px;font-size:.9rem}
+.distance-note{font-size:.83rem;color:var(--muted);margin:.45rem 0}
+body[data-search-state="found"] .hero,body[data-search-state="error"] .hero,body[data-search-state="empty"] .hero,body[data-search-state="denied"] .hero{padding:1.7rem 0 1.5rem;grid-template-columns:1fr}
+body[data-search-state="found"] .landscape,body[data-search-state="error"] .landscape,body[data-search-state="empty"] .landscape,body[data-search-state="denied"] .landscape{display:none}
+body[data-search-state="found"] h1,body[data-search-state="error"] h1,body[data-search-state="empty"] h1,body[data-search-state="denied"] h1{font-size:clamp(1.8rem,3vw,2.6rem);max-width:none}
+body[data-search-state="found"] .intro,body[data-search-state="error"] .intro,body[data-search-state="empty"] .intro,body[data-search-state="denied"] .intro{display:none}
+@media(min-width:761px){
+ body[data-search-state="found"] .hero-copy,body[data-search-state="error"] .hero-copy,body[data-search-state="empty"] .hero-copy,body[data-search-state="denied"] .hero-copy{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:.5rem 2rem;align-items:end}
+ body[data-search-state="found"] .hero-copy h1,body[data-search-state="error"] .hero-copy h1,body[data-search-state="empty"] .hero-copy h1,body[data-search-state="denied"] .hero-copy h1,.hero-copy .eyebrow{grid-column:1/-1}
+ body[data-search-state="found"] .hero-copy form,body[data-search-state="error"] .hero-copy form,body[data-search-state="empty"] .hero-copy form,body[data-search-state="denied"] .hero-copy form{grid-column:2;grid-row:3/5;align-self:start}
+}
+@media(max-width:760px){.hero{padding:1.8rem 0 1.5rem}.landscape{max-height:110px}.intro{margin:1rem 0}.pharmacy.closest .distance{font-size:1.65rem}}
