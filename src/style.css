@@ -106,3 +106,13 @@ body[data-search-state="found"] .intro,body[data-search-state="error"] .intro,bo
  body[data-search-state="found"] .hero-copy form,body[data-search-state="error"] .hero-copy form,body[data-search-state="empty"] .hero-copy form,body[data-search-state="denied"] .hero-copy form{grid-column:2;grid-row:3/5;align-self:start}
 }
 @media(max-width:760px){.hero{padding:1.8rem 0 1.5rem}.landscape{max-height:110px}.intro{margin:1rem 0}.pharmacy.closest .distance{font-size:1.65rem}}
+
+/* Nordic Christmas: still, decorative, and limited to the winter season. */
+.festive-art{display:none}
+body[data-season="christmas"]{--winter-gold:#947443;--winter-snow:#faf8ef}
+body[data-season="christmas"] .festive-art{display:inline}
+body[data-season="christmas"] .winter-pines{stroke:var(--pine);opacity:.72}
+body[data-season="christmas"] .winter-gold{stroke:var(--winter-gold)}
+body[data-season="christmas"] .winter-snow{stroke:var(--winter-snow);opacity:.88}
+body[data-season="christmas"] .masthead{border-bottom-color:var(--winter-gold)}
+@media(prefers-color-scheme:dark){body[data-season="christmas"]{--winter-gold:#d4b478;--winter-snow:#d9e5df}}

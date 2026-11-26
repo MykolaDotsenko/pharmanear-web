@@ -51,3 +51,5 @@ npx playwright test --config e2e/playwright.config.js
 Select Map preview to load an interactive OpenStreetMap view for that pharmacy. The list works without it. Community-sourced schedules are explicitly unverified; use the linked Apteekki.fi directory to confirm. See the CI artifact `web-ui-evidence` for generated desktop/mobile screenshots using synthetic test data. Vercel uses `node scripts/build.mjs` to publish only static application files.
 
 Automated axe checks target serious/critical WCAG A/AA issues on the idle and results screens; a manual conformance review remains necessary.
+
+The optional-in-time Christmas accent is visible November 25–January 6, based on the device's local calendar. It uses decorative SVG only, makes no extra network requests, and disappears with the introductory artwork after search.

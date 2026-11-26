@@ -65,4 +65,7 @@ $('close-map').addEventListener('click',()=>closeMap(true));
 $('show-all').addEventListener('click',()=>{expanded=!expanded;closeMap();render();$('show-all').focus();});
 $('change-location').addEventListener('click',e=>{e.preventDefault();$('locate').focus();});
 $('language').addEventListener('change',e=>{lang=e.target.value;render();});
+const today=new Date();
+const month=today.getMonth()+1,day=today.getDate();
+if((month===11&&day>=25)||month===12||(month===1&&day<=6))document.body.dataset.season='christmas';
 render();
