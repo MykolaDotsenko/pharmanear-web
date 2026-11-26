@@ -51,3 +51,9 @@ npx playwright test --config e2e/playwright.config.js
 Select Map preview to load an interactive OpenStreetMap view for that pharmacy. The list works without it. Community-sourced schedules are explicitly unverified; use the linked Apteekki.fi directory to confirm. See the CI artifact `web-ui-evidence` for generated desktop/mobile screenshots using synthetic test data. Vercel uses `node scripts/build.mjs` to publish only static application files.
 
 Automated axe checks target serious/critical WCAG A/AA issues on the idle and results screens; a manual conformance review remains necessary.
+
+## Verification evidence
+- [Passing Web CI run](https://github.com/MykolaDotsenko/pharmanear-web/actions/runs/45821510171) — 12 unit tests, nine browser tests (including axe) and static build.
+- [Desktop/mobile screenshots from CI (ZIP artifact)](https://github.com/MykolaDotsenko/pharmanear-web/actions/runs/45821510171/artifacts/15117962502) — synthetic pharmacy data; GitHub sign-in and artifact retention may apply.
+- [Hosted demo](https://pharmanear-web.vercel.app).
+- Live provider smoke is deliberately separate from deterministic tests. Run the **Live pharmacy provider smoke** workflow manually when needed, not on every commit. It performs one public Turku city-centre search; provider downtime or CORS failure is recorded as a failed smoke check, not hidden by mocks.
