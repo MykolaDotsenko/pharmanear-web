@@ -1,0 +1,3 @@
+# Finnish pharmacy data
+
+`finland-pharmacies.json` is derived from the Geofabrik Finland OpenStreetMap extract dated 2026-11-24T21:21:23Z. The extract was filtered for `amenity=pharmacy` and includes 788 mapped objects. Data © OpenStreetMap contributors, distributed under the Open Database License (ODbL) 1.0: https://www.openstreetmap.org/copyright and https://opendatacommons.org/licenses/odbl/1-0/. Source: https://download.geofabrik.de/europe/finland.html. The catalog is not a complete official registry; opening hours and point/area centres require verification. Rebuild via the catalog acquisition workflow before the 30-day freshness limit.
