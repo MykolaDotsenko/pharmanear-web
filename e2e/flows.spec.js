@@ -88,3 +88,19 @@ test('recovery offers retry and independent directory',async({page})=>{
  fail=false;await page.getByRole('button',{name:'Try again'}).click();await expect(page.locator('#list li')).toHaveCount(2);
  await expect(page.locator('#recovery')).toBeHidden();
 });
+
+test('Christmas details are seasonal and never obstruct search results',async({page},testInfo)=>{
+ await page.clock.setFixedTime(new Date('2026-12-20T12:00:00Z'));
+ await page.route(endpoint,r=>fulfill(r,fixture));
+ await page.goto('/');
+ await expect(page.locator('body')).toHaveAttribute('data-season','christmas');
+ await expect(page.locator('.festive-art')).toBeVisible();
+ await page.screenshot({path:testInfo.outputPath('nordic-christmas.png'),fullPage:true,animations:'disabled'});
+ await page.locator('#search-label').click();
+ await expect(page.locator('#list li')).toHaveCount(2);
+ await expect(page.locator('.festive-art')).toBeHidden();
+ await page.clock.setFixedTime(new Date('2027-01-07T12:00:00Z'));
+ await page.reload();
+ await expect(page.locator('.festive-art')).toBeHidden();
+ await expect(page.locator('#locate')).toBeVisible();
+});
