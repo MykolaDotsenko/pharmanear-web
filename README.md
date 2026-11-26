@@ -3,6 +3,7 @@
 A small, independent pharmacy finder built as a Treat Health engineering application exercise. Not affiliated with Treat Health and not medical advice.
 
 ## What it does
+
 - On explicit request, obtains a device position; alternatively search from one of five Finnish city centres.
 - Searches a dated Finnish OpenStreetMap catalog locally within 30 km. Live Overpass is a fallback, expanding the search from 3 km to 10 km to 30 km if needed.
 - Calculates great-circle distances on the device and presents the closest returned mapped pharmacies first (up to 20 displayed).
@@ -10,11 +11,13 @@ A small, independent pharmacy finder built as a Treat Health engineering applica
 - Handles permission denial, loading, cancellation, empty results, and provider failures without displaying stale search results.
 
 ## Privacy and limitations
+
 No account, analytics, location history or persistent application storage. Local catalog lookup does not send the search coordinates. If live fallback is needed, it sends coordinates rounded to two decimal places (not anonymous; the external provider also receives normal network metadata, including IP address). Catalog downloads also expose normal network metadata. The device-provided position is retained in memory during the search and used for distance calculation. Location precision depends on the OS/browser; distances are straight-line estimates, not travel distance. Map links only open on request and are external services with their own privacy policies. OpenStreetMap may be incomplete, and building centres may differ from entrances. The nearest result means nearest returned mapped location within the bounded search, not a guarantee of the nearest real-world pharmacy. Mapped opening hours are shown as unverified and must be confirmed with the pharmacy. Public Overpass is best-effort, not an SLA-backed production service. Production rollout would require a reviewed EU-hosted provider or self-hosted dataset, rate limiting, monitoring and licensing review. See [ADR](docs/0001-search-and-privacy.md).
 
 Data © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), ODbL. The bundled Finnish catalog is derived from Geofabrik under ODbL 1.0; see [catalog attribution and provenance](data/README.md). The dated snapshot is refreshed weekly through GitHub Actions; after seven days clients attempt a newer snapshot, and snapshots older than 30 days are rejected.
 
 ## Run locally
+
 Node.js 20+; no dependency installation required.
 
 ```sh
@@ -25,6 +28,7 @@ npm start
 Open http://localhost:4173. Geolocation requires HTTPS or localhost. A static HTTPS deployment can publish the application with `node scripts/build.mjs`, including the catalog. No API keys are required. The local server binds to loopback and uses a restrictive CSP.
 
 ## Structure
+
 - `src/core.js`: distance, normalization, bounded search and map links.
 - `src/app.js`: DOM rendering and event binding.
 - `src/search-controller.js`: search state, location permission and request cancellation.
@@ -38,15 +42,19 @@ Open http://localhost:4173. Geolocation requires HTTPS or localhost. A static HT
 - `.github/workflows/ci.yml`: automated checks on pushes and pull requests.
 
 ## Verification
+
 The verified mobile-results revision passed 32 unit tests, 16 browser tests and a separate five-city catalog test. The production catalog endpoints passed a separate HTTP smoke check. Public Overpass availability, full manual accessibility conformance and the first scheduled catalog publication remain separate verification gates. Run the manual checklist before submission.
 
 ## Engineering process
+
 AI-assisted implementation was used. See [review checklist and limitations](docs/review.md). This is an initial candidate deliverable, not a claim of production certification.
 
 ## Design
+
 The 2026 refresh draws on Finnish functionalism: paper and pine tones, an editorial serif heading, a decorative abstract contour illustration (not a geographic map), restrained motion, dark mode, numbered result rows and responsive controls. No tracking, web fonts or image requests. Motion respects reduced-motion preferences.
 
 Run browser tests after installing the pinned test-only dependency:
+
 ```sh
 npm install --no-save --package-lock=false @playwright/test@1.56.1 axe-core@4.10.3
 npx playwright install chromium
@@ -54,6 +62,7 @@ npx playwright test --config e2e/playwright.config.js
 ```
 
 ## Map and hours
+
 Select Map preview to load an interactive OpenStreetMap view for that pharmacy. The list works without it. Community-sourced schedules are explicitly unverified; use the linked Apteekki.fi directory to confirm. See the CI artifact `web-ui-evidence` for generated desktop/mobile screenshots using synthetic test data. Vercel uses `node scripts/build.mjs` to publish only static application files.
 
 Automated axe checks target serious/critical WCAG A/AA issues on the idle and results screens; a manual conformance review remains necessary.
@@ -61,9 +70,11 @@ Automated axe checks target serious/critical WCAG A/AA issues on the idle and re
 The optional-in-time Christmas accent is visible November 25–January 6, based on the device's local calendar. It uses decorative SVG only, makes no extra network requests, and disappears with the introductory artwork after search.
 
 ## Architecture
+
 See [architecture notes](docs/architecture.md) for module boundaries, dependency direction and official platform references.
 
 ## Verification evidence
+
 - [Passing Web CI](https://github.com/MykolaDotsenko/pharmanear-web/actions/runs/45830344625).
 - [Production catalog HTTP smoke](https://github.com/MykolaDotsenko/pharmanear-web/actions/runs/45831290654).
 - [Hosted demo](https://pharmanear-web.vercel.app).

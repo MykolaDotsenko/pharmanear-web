@@ -26,8 +26,10 @@ async function request(endpoint, query, signal, fetchImpl) {
       referrerPolicy: 'no-referrer',
     });
     if (!response.ok) {
-      throw new ProviderError('Pharmacy provider returned HTTP ' + response.status,
-        [500, 502, 503, 504].includes(response.status));
+      throw new ProviderError(
+        'Pharmacy provider returned HTTP ' + response.status,
+        [500, 502, 503, 504].includes(response.status),
+      );
     }
     const data = await response.json();
     if (!Array.isArray(data?.elements) || data.remark) {
@@ -47,8 +49,10 @@ export async function fetchPharmacies(query, signal, fetchImpl = globalThis.fetc
       return await request(endpoint, query, signal, fetchImpl);
     } catch (error) {
       signal?.throwIfAborted();
-      const retryable = error instanceof ProviderError ? error.retryable :
-        error instanceof TypeError || error instanceof SyntaxError || error?.name === 'AbortError';
+      const retryable =
+        error instanceof ProviderError
+          ? error.retryable
+          : error instanceof TypeError || error instanceof SyntaxError || error?.name === 'AbortError';
       if (!retryable || index === endpoints.length - 1) throw error;
     }
   }

@@ -1,80 +1,185 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="referrer" content="no-referrer">
-  <meta name="description" content="Find nearby pharmacies without an account.">
-  <meta name="theme-color" content="#f6f4ee">
-  <title>PharmaNear — Find a pharmacy</title>
-  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
-  <link rel="stylesheet" href="./src/style.css">
-  <script type="module" src="./src/app.js"></script>
-</head>
-<body>
-  <a class="skip" href="#main">Skip to content</a>
-  <header class="shell masthead">
-    <a class="brand" href="./"><span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 4v16M4 12h16" stroke="currentColor" stroke-width="2.5" stroke-linecap="square"/></svg></span>PharmaNear<span class="brand-dot" aria-hidden="true">.</span></a>
-    <label class="language"><span id="language-label">Language</span><select id="language"><option value="en">English</option><option value="fi">Suomi</option><option value="sv">Svenska</option></select></label>
-  </header>
-  <main class="shell" id="main">
-    <section class="hero" aria-labelledby="heading">
-      <div class="hero-copy">
-        <p class="eyebrow" id="eyebrow">PHARMACY FINDER</p>
-        <h1 id="heading">Find a pharmacy near you.</h1>
-        <p class="intro" id="intro">Find the closest mapped pharmacies by straight-line distance. No account needed.</p>
-        <button id="locate" class="primary" type="button">
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="7" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3" stroke="currentColor" stroke-width="1.5"/></svg>
-          <span id="locate-label">Use my location</span><span class="button-arrow" aria-hidden="true">↗</span>
-        </button>
-        <details class="privacy-details"><summary id="privacy-summary">Location privacy</summary><p class="privacy" id="privacy">Catalog search runs on your device without sending your location. For live search, only a location rounded to 2 decimal places is sent to OpenStreetMap Overpass providers (FOSSGIS or Private.coffee). Distances are calculated on your device.</p></details>
-        <form id="city-form"><label for="city" id="city-label">Or search from a city centre</label><div class="form-row"><select id="city" required><option value="Turku">Turku</option><option value="Helsinki">Helsinki</option><option value="Tampere">Tampere</option><option value="Oulu">Oulu</option><option value="Vaasa">Vaasa</option></select><button type="submit" class="secondary" id="search-label">Search</button></div></form>
-      </div>
-      <div class="landscape" aria-hidden="true">
-        <svg viewBox="0 0 440 450" preserveAspectRatio="xMidYMid slice" fill="none">
-          <rect width="440" height="450" class="land-base"/>
-          <path class="land-water" d="M440 0H165C99 71 172 106 112 171S-29 231 6 310s106 40 141 140h293Z"/>
-          <g class="contours" stroke-width="1">
-            <path d="M-20 26C127 115 22 197 138 258S268 360 214 470"/>
-            <path d="M-9 0C152 96 50 191 159 245S292 346 240 470"/>
-            <path d="M22-15C181 85 77 171 185 232S317 337 271 470"/>
-            <path d="M54-24C208 67 105 154 210 218S342 318 301 470"/>
-            <path d="M92-22C240 51 135 140 236 203S366 307 332 470"/>
-            <path d="M130-16C272 39 163 122 261 189S390 293 363 470"/>
-            <path d="M165-20C304 25 194 104 288 177S415 279 393 470"/>
-          </g>
-          <g class="locator-art"><circle cx="254" cy="207" r="65" class="art-ring"/><circle cx="254" cy="207" r="43" class="art-ring"/><circle cx="254" cy="207" r="23" class="art-disc"/><path d="M254 196v22m-11-11h22" stroke-width="2" class="art-cross"/></g>
-          <!-- Quiet Finnish winter illustration; decorative, never an actual map. -->
-          <g class="festive-art" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round">
-            <g class="winter-pines" stroke-width="1.8">
-              <path d="M57 407v-91m0 2-19 28h12l-20 27h18l-25 29h68l-25-29h18l-20-27h12z"/>
-              <path d="M104 421v-70m0 0-15 22h9l-17 23h13l-18 21h56l-18-21h13l-17-23h9z"/>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="description" content="Find nearby pharmacies without an account." />
+    <meta name="theme-color" content="#f6f4ee" />
+    <title>PharmaNear — Find a pharmacy</title>
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="stylesheet" href="./src/style.css" />
+    <script type="module" src="./src/app.js"></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="shell masthead">
+      <a class="brand" href="./">
+        <span class="mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M12 4v16M4 12h16" stroke="currentColor" stroke-width="2.5" stroke-linecap="square" />
+          </svg>
+        </span>
+        PharmaNear
+        <span class="brand-dot" aria-hidden="true">.</span>
+      </a>
+      <label class="language">
+        <span id="language-label">Language</span>
+        <select id="language">
+          <option value="en">English</option>
+          <option value="fi">Suomi</option>
+          <option value="sv">Svenska</option>
+        </select>
+      </label>
+    </header>
+    <main class="shell" id="main">
+      <section class="hero" aria-labelledby="heading">
+        <div class="hero-copy">
+          <p class="eyebrow" id="eyebrow">PHARMACY FINDER</p>
+          <h1 id="heading">Find a pharmacy near you.</h1>
+          <p class="intro" id="intro">
+            Find the closest mapped pharmacies by straight-line distance. No account needed.
+          </p>
+          <button id="locate" class="primary" type="button">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="12" r="7" stroke="currentColor" stroke-width="1.5" />
+              <circle cx="12" cy="12" r="2.5" fill="currentColor" />
+              <path d="M12 2v3m0 14v3M2 12h3m14 0h3" stroke="currentColor" stroke-width="1.5" />
+            </svg>
+            <span id="locate-label">Use my location</span>
+            <span class="button-arrow" aria-hidden="true">↗</span>
+          </button>
+          <details class="privacy-details">
+            <summary id="privacy-summary">Location privacy</summary>
+            <p class="privacy" id="privacy">
+              Catalog search runs on your device without sending your location. For live search, only a
+              location rounded to 2 decimal places is sent to OpenStreetMap Overpass providers (FOSSGIS or
+              Private.coffee). Distances are calculated on your device.
+            </p>
+          </details>
+          <form id="city-form">
+            <label for="city" id="city-label">Or search from a city centre</label>
+            <div class="form-row">
+              <select id="city" required>
+                <option value="Turku">Turku</option>
+                <option value="Helsinki">Helsinki</option>
+                <option value="Tampere">Tampere</option>
+                <option value="Oulu">Oulu</option>
+                <option value="Vaasa">Vaasa</option>
+              </select>
+              <button type="submit" class="secondary" id="search-label">Search</button>
+            </div>
+          </form>
+        </div>
+        <div class="landscape" aria-hidden="true">
+          <svg viewBox="0 0 440 450" preserveAspectRatio="xMidYMid slice" fill="none">
+            <rect width="440" height="450" class="land-base" />
+            <path class="land-water" d="M440 0H165C99 71 172 106 112 171S-29 231 6 310s106 40 141 140h293Z" />
+            <g class="contours" stroke-width="1">
+              <path d="M-20 26C127 115 22 197 138 258S268 360 214 470" />
+              <path d="M-9 0C152 96 50 191 159 245S292 346 240 470" />
+              <path d="M22-15C181 85 77 171 185 232S317 337 271 470" />
+              <path d="M54-24C208 67 105 154 210 218S342 318 301 470" />
+              <path d="M92-22C240 51 135 140 236 203S366 307 332 470" />
+              <path d="M130-16C272 39 163 122 261 189S390 293 363 470" />
+              <path d="M165-20C304 25 194 104 288 177S415 279 393 470" />
             </g>
-            <g class="winter-gold" stroke-width="1.6">
-              <path d="M355 80v34m-17-17h34m-26-9 18 18m0-18-18 18"/>
-              <path d="M391 132v13m-6.5-6.5h13M308 54v10m-5-5h10"/>
+            <g class="locator-art">
+              <circle cx="254" cy="207" r="65" class="art-ring" />
+              <circle cx="254" cy="207" r="43" class="art-ring" />
+              <circle cx="254" cy="207" r="23" class="art-disc" />
+              <path d="M254 196v22m-11-11h22" stroke-width="2" class="art-cross" />
             </g>
-            <g class="winter-snow" stroke-width="1.5"><path d="M26 413q39-7 82 2t62 0M279 371q36-8 76 0t66-3"/><circle cx="96" cy="82" r="1.5"/><circle cx="145" cy="135" r="1.5"/><circle cx="386" cy="277" r="1.5"/></g>
-          </g>
-          <path class="art-ticks" d="M28 28h24m-24 0v24M412 422h-24m24 0v-24" stroke-width="1"/>
-        </svg>
-      </div>
-    </section>
-    <section aria-labelledby="results-heading" class="results" data-state="idle">
-      <div class="result-header"><h2 id="results-heading" tabindex="-1">Nearby pharmacies</h2><button id="cancel" class="text-button" type="button" hidden>Cancel</button></div>
-      <div class="status-line"><span class="status-dot" aria-hidden="true"></span><p id="status" role="status" aria-live="polite" aria-atomic="true">Choose your location to start.</p></div>
-      <div class="recovery" id="recovery" hidden><button id="retry" type="button" class="secondary">Try again</button><a id="fallback-directory" href="https://www.apteekki.fi/apteekkihaku" rel="noreferrer">Find a pharmacy on Apteekki.fi</a></div>
-      <div id="loading-art" class="loading-art" aria-hidden="true" hidden><i></i><i></i><i></i></div>
-      <details id="result-details" class="result-details" hidden><summary id="result-details-label">About these results</summary><p id="source-note"></p><p id="distance-note" class="distance-note">Distances are straight-line estimates, not walking routes.</p><p id="map-disclosure" class="map-disclosure"></p></details>
-      <section id="map-panel" class="map-panel" aria-labelledby="map-heading" hidden>
-        <div class="result-header"><h3 id="map-heading" tabindex="-1"></h3><button type="button" id="close-map" class="text-button">Close map</button></div>
-        <p id="map-privacy"></p><div id="map-frame"></div>
+            <!-- Quiet Finnish winter illustration; decorative, never an actual map. -->
+            <g
+              class="festive-art"
+              aria-hidden="true"
+              fill="none"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <g class="winter-pines" stroke-width="1.8">
+                <path d="M57 407v-91m0 2-19 28h12l-20 27h18l-25 29h68l-25-29h18l-20-27h12z" />
+                <path d="M104 421v-70m0 0-15 22h9l-17 23h13l-18 21h56l-18-21h13l-17-23h9z" />
+              </g>
+              <g class="winter-gold" stroke-width="1.6">
+                <path d="M355 80v34m-17-17h34m-26-9 18 18m0-18-18 18" />
+                <path d="M391 132v13m-6.5-6.5h13M308 54v10m-5-5h10" />
+              </g>
+              <g class="winter-snow" stroke-width="1.5">
+                <path d="M26 413q39-7 82 2t62 0M279 371q36-8 76 0t66-3" />
+                <circle cx="96" cy="82" r="1.5" />
+                <circle cx="145" cy="135" r="1.5" />
+                <circle cx="386" cy="277" r="1.5" />
+              </g>
+            </g>
+            <path class="art-ticks" d="M28 28h24m-24 0v24M412 422h-24m24 0v-24" stroke-width="1" />
+          </svg>
+        </div>
       </section>
-      <ol id="list" aria-label="Pharmacies by distance"></ol>
-      <div class="result-tools" id="result-tools" hidden><button type="button" id="show-all" class="secondary" aria-controls="list" aria-expanded="false"></button><a id="change-location" href="#heading">Change location</a></div>
-      <p class="directory-link"><a id="directory" href="https://www.apteekki.fi/apteekkihaku" rel="noreferrer">Check Finnish pharmacy details at Apteekki.fi</a></p>
-    </section>
-  </main>
-  <footer class="shell"><div class="footer-mark" aria-hidden="true">+</div><p id="disclaimer">Distances are not walking routes. Check pharmacy opening hours before travelling. Map data can be incomplete.</p><a href="https://www.openstreetmap.org/copyright" rel="noreferrer">© OpenStreetMap contributors</a></footer>
-</body>
+      <section aria-labelledby="results-heading" class="results" data-state="idle">
+        <div class="result-header">
+          <h2 id="results-heading" tabindex="-1">Nearby pharmacies</h2>
+          <button id="cancel" class="text-button" type="button" hidden>Cancel</button>
+        </div>
+        <div class="status-line">
+          <span class="status-dot" aria-hidden="true"></span>
+          <p id="status" role="status" aria-live="polite" aria-atomic="true">
+            Choose your location to start.
+          </p>
+        </div>
+        <div class="recovery" id="recovery" hidden>
+          <button id="retry" type="button" class="secondary">Try again</button>
+          <a id="fallback-directory" href="https://www.apteekki.fi/apteekkihaku" rel="noreferrer">
+            Find a pharmacy on Apteekki.fi
+          </a>
+        </div>
+        <div id="loading-art" class="loading-art" aria-hidden="true" hidden>
+          <i></i>
+          <i></i>
+          <i></i>
+        </div>
+        <details id="result-details" class="result-details" hidden>
+          <summary id="result-details-label">About these results</summary>
+          <p id="source-note"></p>
+          <p id="distance-note" class="distance-note">
+            Distances are straight-line estimates, not walking routes.
+          </p>
+          <p id="map-disclosure" class="map-disclosure"></p>
+        </details>
+        <section id="map-panel" class="map-panel" aria-labelledby="map-heading" hidden>
+          <div class="result-header">
+            <h3 id="map-heading" tabindex="-1"></h3>
+            <button type="button" id="close-map" class="text-button">Close map</button>
+          </div>
+          <p id="map-privacy"></p>
+          <div id="map-frame"></div>
+        </section>
+        <ol id="list" aria-label="Pharmacies by distance"></ol>
+        <div class="result-tools" id="result-tools" hidden>
+          <button
+            type="button"
+            id="show-all"
+            class="secondary"
+            aria-controls="list"
+            aria-expanded="false"
+          ></button>
+          <a id="change-location" href="#heading">Change location</a>
+        </div>
+        <p class="directory-link">
+          <a id="directory" href="https://www.apteekki.fi/apteekkihaku" rel="noreferrer">
+            Check Finnish pharmacy details at Apteekki.fi
+          </a>
+        </p>
+      </section>
+    </main>
+    <footer class="shell">
+      <div class="footer-mark" aria-hidden="true">+</div>
+      <p id="disclaimer">
+        Distances are not walking routes. Check pharmacy opening hours before travelling. Map data can be
+        incomplete.
+      </p>
+      <a href="https://www.openstreetmap.org/copyright" rel="noreferrer">© OpenStreetMap contributors</a>
+    </footer>
+  </body>
 </html>
