@@ -104,3 +104,16 @@ test('Christmas details are seasonal and never obstruct search results',async({p
  await expect(page.locator('.festive-art')).toBeHidden();
  await expect(page.locator('#locate')).toBeVisible();
 });
+
+test('Christmas palette uses accessible festive actions in light and dark mode',async({page})=>{
+ await page.clock.setFixedTime(new Date('2026-12-20T12:00:00Z'));
+ await page.emulateMedia({colorScheme:'light',reducedMotion:'reduce'});
+ await page.goto('/');
+ const background=()=>page.locator('#locate').evaluate(el=>getComputedStyle(el).backgroundColor);
+ expect(await background()).toBe('rgb(139, 38, 59)');
+ await page.emulateMedia({colorScheme:'dark'});
+ expect(await background()).toBe('rgb(174, 62, 84)');
+ await page.clock.setFixedTime(new Date('2027-01-07T12:00:00Z'));
+ await page.reload();
+ expect(await background()).not.toBe('rgb(174, 62, 84)');
+});
