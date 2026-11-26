@@ -11,7 +11,7 @@ jobs:
         with:
           node-version: '22'
       - run: npm test
-      - run: node --check src/app.js
+      - run: for file in src/*.js; do node --check "$file"; done
       - run: npm install --no-save --package-lock=false @playwright/test@1.56.1 axe-core@4.10.3
       - run: npx playwright install --with-deps chromium
       - run: npx playwright test --config e2e/playwright.config.js
