@@ -1,0 +1,195 @@
+/* ---------- Season ---------- */
+
+.festive-only,
+.festive-art {
+  display: none;
+}
+:root[data-season='christmas'] .icon-button.festive-only {
+  display: inline-grid;
+}
+:root[data-season='christmas'] .greeting {
+  display: inline;
+}
+:root[data-season='christmas'] .festive-art {
+  display: inline;
+}
+:root[data-season='christmas'] .garland {
+  display: block;
+}
+:root[data-season='christmas'] .masthead,
+:root[data-season='christmas'] .landscape {
+  border-color: var(--gold);
+}
+/* Room for the lights to hang without touching the content below. */
+:root[data-season='christmas'] .masthead {
+  margin-bottom: 0.9rem;
+}
+.greeting::before {
+  content: '✦' / '';
+  margin-right: 0.6em;
+  color: var(--gold);
+}
+.greeting {
+  white-space: nowrap;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-size: 1.05rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+:root[data-season='christmas'] .closest-label::before {
+  content: '✦' / '';
+  margin-right: 0.45em;
+  color: var(--gold);
+}
+
+/* A string of lights hanging from the header rule. */
+.garland {
+  position: absolute;
+  inset: auto 0 -16px 0;
+  height: 26px;
+  pointer-events: none;
+}
+.garland-wire {
+  position: absolute;
+  inset: 0 0 auto 0;
+  width: 100%;
+  height: 14px;
+}
+.garland-wire path {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 1;
+}
+.garland-bulbs {
+  position: absolute;
+  inset: 10px 0 auto 0;
+  display: flex;
+  justify-content: space-around;
+}
+/* Glass bulbs on sockets, lit from inside: a bright core, the bulb's colour and a soft halo around it. */
+.garland-bulbs i {
+  --bulb: #c8324a;
+  --glow: #ff7088;
+  position: relative;
+  width: 8px;
+  height: 12px;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  background: radial-gradient(
+    circle at 38% 32%,
+    color-mix(in oklab, var(--glow) 35%, white) 0 16%,
+    var(--glow) 38%,
+    var(--bulb) 72%,
+    color-mix(in oklab, var(--bulb) 70%, black) 100%
+  );
+}
+.garland-bulbs i::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: 50%;
+  width: 5px;
+  height: 4px;
+  translate: -50% 0;
+  border-radius: 1px;
+  background: color-mix(in oklab, var(--ink) 65%, var(--gold));
+}
+.garland-bulbs i::after {
+  content: '';
+  position: absolute;
+  inset: -9px -8px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(closest-side, color-mix(in oklab, var(--glow) 55%, transparent), transparent);
+}
+:root[data-theme='dark'] .garland-bulbs i::after {
+  inset: -12px -11px;
+  background: radial-gradient(closest-side, color-mix(in oklab, var(--glow) 80%, transparent), transparent);
+}
+.garland-bulbs i:nth-child(4n + 2) {
+  --bulb: #d99a2b;
+  --glow: #ffd27a;
+}
+.garland-bulbs i:nth-child(4n + 3) {
+  --bulb: #2e8b57;
+  --glow: #8affbd;
+}
+.garland-bulbs i:nth-child(4n) {
+  --bulb: #2f6fd1;
+  --glow: #9ccbff;
+}
+/* Switched on, every bulb glows on its own rhythm (festive.js sets --dur and --delay), and a few flicker the
+   way old bulbs do. The lights button stops them (WCAG 2.2.2); reduced motion leaves them steadily lit. */
+.garland[data-lights='on'] .garland-bulbs i {
+  animation: glow var(--dur, 3s) ease-in-out var(--delay, 0s) infinite;
+}
+.garland[data-lights='on'] .garland-bulbs i.flicker {
+  animation-name: flicker;
+}
+.garland[data-lights='off'] .garland-bulbs i {
+  filter: saturate(0.35) brightness(0.75);
+}
+.garland[data-lights='off'] .garland-bulbs i::after {
+  opacity: 0;
+}
+
+/* Snowflakes that fly from the pointer over the artwork (festive.js). Decorative and short-lived. */
+.flake-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  overflow: hidden;
+  pointer-events: none;
+}
+.flake {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--size);
+  height: var(--size);
+  color: #fff;
+  filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 6px #8fd3ff) drop-shadow(0 0 1px #4f86b8);
+}
+.flake.sparkle {
+  color: #fff1b8;
+  filter: drop-shadow(0 0 3px #ffd25e) drop-shadow(0 0 8px #ffb52e);
+}
+
+/* Winter details inside the artwork. */
+.winter-pines {
+  stroke: var(--pine);
+}
+.winter-gold,
+.tree-star {
+  stroke: var(--gold);
+}
+.winter-gold {
+  stroke-width: 2.2;
+}
+.tree-star {
+  fill: var(--gold);
+  stroke-width: 1;
+}
+.bauble {
+  fill: var(--accent);
+}
+.bauble.gold {
+  fill: var(--gold);
+}
+.winter-snow,
+.winter-flakes {
+  stroke: var(--snow);
+  opacity: 0.9;
+}
+
+/* Snow drawn on demand over the whole window; it never takes clicks or focus. */
+.snowfall {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10;
+  color: var(--flake);
+}

@@ -1,10 +1,10 @@
-import { embedUrl, formatDistance, mapsUrl } from './core.js';
-import { reviewedDetails, possibleDuplicate } from './pharmacy-details.js';
+import { embedUrl } from './core.js';
 import { messages, preferredLanguage } from './strings.js';
 import { createSearchController } from './search-controller.js';
 import { lookupPharmacies } from './catalog.js';
-import { formatOpeningHours, todaysRule } from './hours.js';
 import { finnishToday } from './holidays.js';
+import { element, pharmacyRow } from './pharmacy-row.js';
+import { createRowRadar } from './row-radar.js';
 import { setUpSeason } from './festive.js';
 import { setUpTheme } from './theme.js';
 import { setUpEffects, transition } from './effects.js';
@@ -18,12 +18,6 @@ const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 let lang = preferredLanguage(navigator.languages);
 let expanded = false;
 let selected = null;
-let radar = null;
-let radarGeneration = 0;
-// The pharmacy whose row holds the open radar; the host moves into its row, like the map panel.
-let radarFor = null;
-const radarHost = document.createElement('div');
-radarHost.className = 'radar-host';
 // The result set on screen and how many of its rows the visitor has already seen arrive.
 let shownResult = null;
 let shownCount = 0;
@@ -38,6 +32,23 @@ const map = {
   close: $('close-map'),
 };
 
+// The radar opens inside a row, like the map; opening one closes the other.
+const radar = createRowRadar({
+  list: $('list'),
+  options: () =>
+    state.status === 'found' && {
+      pharmacies: state.result.results,
+      language: lang,
+      text: tr('radarView'),
+      unnamed: tr('unnamed'),
+      mapLabel: tr('map'),
+      reducedMotion,
+      loading: tr('radarLoading'),
+      failed: tr('radarError'),
+    },
+  onOpen: () => closeMap(),
+});
+
 const controller = createSearchController({
   lookup: lookupPharmacies,
   geolocation: navigator.geolocation,
@@ -48,7 +59,7 @@ const controller = createSearchController({
     if (next.busy) {
       expanded = false;
       closeMap();
-      closeRadar();
+      radar.close();
     }
     const update = () => {
       render();
@@ -174,11 +185,15 @@ function closeMap(restoreFocus = false) {
 
 /** Opens the map inside the pharmacy's own row, so its context stays in view. */
 function openMap(pharmacy) {
-  closeRadar();
+  radar.close();
   selected = pharmacy;
   const frame = document.createElement('iframe');
-  frame.src = embedUrl(pharmacy);
+  // OpenStreetMap gets no cookies or lasting storage (credentialless, where supported) and no referrer, and
+  // its page cannot navigate this one, submit forms or open dialogs; only its scripts and its own links run.
+  frame.setAttribute('credentialless', '');
+  frame.sandbox = 'allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox';
   frame.referrerPolicy = 'no-referrer';
+  frame.src = embedUrl(pharmacy);
   map.frame.replaceChildren(frame);
   previewButton(pharmacy.id).closest('li').append(map.panel);
   map.panel.hidden = false;
@@ -186,168 +201,13 @@ function openMap(pharmacy) {
   map.heading.focus();
 }
 
-function radarButton(id) {
-  return [...document.querySelectorAll('[data-radar-id]')].find(button => button.dataset.radarId === id);
-}
-
-function closeRadar(restoreFocus = false) {
-  const id = radarFor;
-  radarGeneration++;
-  radar?.close();
-  radar = null;
-  radarFor = null;
-  radarHost.replaceChildren();
-  radarHost.remove();
-  for (const button of document.querySelectorAll('[data-radar-id]'))
-    button.setAttribute('aria-expanded', 'false');
-  if (restoreFocus && id) radarButton(id)?.focus();
-}
-
-/** Opens the radar inside the chosen pharmacy's row, pointing to it; its button closes it again. */
-async function showRadar(pharmacy) {
-  if (state.status !== 'found') return;
-  if (radarFor === pharmacy.id) {
-    closeRadar(true);
-    return;
-  }
-  closeRadar();
-  closeMap();
-  const generation = ++radarGeneration;
-  const button = radarButton(pharmacy.id);
-  radarFor = pharmacy.id;
-  button.setAttribute('aria-expanded', 'true');
-  button.closest('li').append(radarHost);
-  radarHost.textContent = tr('radarLoading');
-  try {
-    const { openRadar } = await import('./radar-view.js');
-    if (generation !== radarGeneration) return;
-    radarHost.replaceChildren();
-    radar = openRadar({
-      container: radarHost,
-      pharmacies: state.result.results,
-      targetId: pharmacy.id,
-      language: lang,
-      text: tr('radarView'),
-      unnamed: tr('unnamed'),
-      mapLabel: tr('map'),
-      reducedMotion,
-      onClose: () => closeRadar(true),
-    });
-  } catch {
-    if (generation !== radarGeneration) return;
-    radarFor = null;
-    button.setAttribute('aria-expanded', 'false');
-    radarHost.textContent = tr('radarError');
-  }
-}
-
-function element(tag, className, text) {
-  const node = document.createElement(tag);
-  if (className) node.className = className;
-  if (text !== undefined) node.textContent = text;
-  return node;
-}
-
 /**
- * Localized rules when the mapped value is simple enough, with today's rule marked; otherwise the mapped
- * rules as they are. Nothing says whether the pharmacy is open: the hours are unverified.
+ * The status is a polite live region: it is written only when its words change, so expanding the list or
+ * any other render says nothing twice.
  */
-function hoursLine(pharmacy, today, checked) {
-  const hours = element('p', 'hours');
-  if (!pharmacy.hours) {
-    hours.textContent = tr('missingHours');
-    hours.classList.add('hours-missing');
-    return hours;
-  }
-  const rules =
-    formatOpeningHours(pharmacy.hours, lang, tr('openingHours')) ??
-    pharmacy.hours
-      .split(';')
-      .map(part => part.trim())
-      .filter(Boolean);
-  const current = todaysRule(pharmacy.hours, today);
-  // The separator stays with the rule before it, so a wrapped line never starts with "·".
-  const value = element('span', 'hours-value');
-  rules.forEach((rule, index) => {
-    const last = index === rules.length - 1;
-    const item = element('span', index === current ? 'hours-rule today' : 'hours-rule', rule);
-    if (index === current) item.append(' ', element('span', 'today-tag', tr('today')));
-    if (!last) item.append(' ·');
-    value.append(item);
-    if (!last) value.append(' ');
-  });
-  // Only hours that match a recently checked source drop the "unverified" qualifier.
-  hours.append(element('span', 'hours-label', tr(checked ? 'hoursChecked' : 'hours')), value);
-  return hours;
-}
-
-/** `entrance` is the row's place among the rows arriving now, or negative for a row already on screen. */
-function pharmacyRow(pharmacy, index, entrance, today, results) {
-  const review = reviewedDetails(pharmacy);
-  const name = pharmacy.name || tr('unnamed');
-  const row = element('li', index === 0 ? 'pharmacy closest' : 'pharmacy');
-  if (entrance >= 0) {
-    row.classList.add('arriving');
-    row.style.setProperty('--i', String(entrance));
-  }
-
-  const rank = element('span', 'rank', String(index + 1).padStart(2, '0'));
-  rank.setAttribute('aria-hidden', 'true');
-
-  const info = element('div', 'pharmacy-info');
-  if (index === 0) info.append(element('p', 'closest-label', tr('nearest')));
-  info.append(element('h3', '', name));
-  const address = review?.address || pharmacy.address;
-  if (address) info.append(element('p', '', address));
-  else if (pharmacy.name) info.append(element('p', 'missing-detail', tr('missingAddress')));
-  if (!pharmacy.name) {
-    const message = possibleDuplicate(pharmacy, results) ? tr('possibleDuplicate') : tr('incompleteEntry');
-    info.append(element('p', 'missing-detail', message));
-  }
-  info.append(hoursLine(pharmacy, today, review?.checked));
-  // Each row repeats these links, so their accessible names carry the pharmacy's name.
-  const sourceLink = (text, href) => {
-    const source = element('a', 'hours-source', text);
-    source.href = href;
-    source.rel = 'noreferrer';
-    source.setAttribute('aria-label', `${text}: ${name}`);
-    info.append(source);
-  };
-  if (review) {
-    const date =
-      review.checked &&
-      new Intl.DateTimeFormat(lang, { dateStyle: 'medium', timeZone: 'UTC' }).format(
-        new Date(review.checked),
-      );
-    sourceLink(date ? `${tr('sourceChecked')} ${date}` : tr('sourceLink'), review.url);
-  } else if (!pharmacy.hours) {
-    sourceLink(tr('checkHours'), 'https://www.apteekki.fi/apteekkihaku');
-  }
-
-  const preview = element('button', 'map-preview', tr('mapHere'));
-  preview.type = 'button';
-  preview.dataset.mapId = pharmacy.id;
-  preview.setAttribute('aria-label', `${tr('mapHere')}: ${name}`);
-  preview.setAttribute('aria-describedby', 'map-disclosure');
-  preview.addEventListener('click', () => openMap(pharmacy));
-
-  const radarOpen = element('button', 'map-preview', tr('radarHere'));
-  radarOpen.type = 'button';
-  radarOpen.dataset.radarId = pharmacy.id;
-  radarOpen.setAttribute('aria-label', `${tr('radarHere')}: ${name}`);
-  radarOpen.setAttribute('aria-expanded', String(radarFor === pharmacy.id));
-  radarOpen.addEventListener('click', () => showRadar(pharmacy));
-
-  // A short visible label keeps three actions on one line on phones; the accessible name says it all.
-  const link = element('a', '', tr('mapShort'));
-  link.href = mapsUrl(pharmacy);
-  link.rel = 'noreferrer';
-  link.setAttribute('aria-label', `${tr('map')}: ${name}`);
-
-  const action = element('div', 'pharmacy-action');
-  action.append(preview, radarOpen, link);
-  row.append(rank, info, element('span', 'distance', formatDistance(pharmacy.distance, lang)), action);
-  return row;
+function announce(text) {
+  const status = $('status');
+  if (status.textContent.trim() !== text) status.textContent = text;
 }
 
 function renderResults() {
@@ -358,14 +218,14 @@ function renderResults() {
   list.replaceChildren();
 
   if (status !== 'found') {
-    $('status').textContent = tr(status);
+    announce(tr(status));
     return;
   }
 
   const place = origin === 'device' ? tr('device') : tr('cities')[origin];
   const count = result.results.length;
   const noun = tr('resultCount')[new Intl.PluralRules(lang).select(count)] ?? tr('resultCount').other;
-  $('status').textContent = `${count} ${noun} · ${place}`;
+  announce(`${count} ${noun} · ${place}`);
   const notes =
     result.source === 'catalog'
       ? [`${tr('catalogDate')}: ${result.sourceDate.slice(0, 10)}`, tr('catalogScope')]
@@ -380,7 +240,19 @@ function renderResults() {
   shownCount = visible.length;
   const today = finnishToday();
   list.append(
-    ...visible.map((pharmacy, index) => pharmacyRow(pharmacy, index, index - seen, today, result.results)),
+    ...visible.map((pharmacy, index) =>
+      pharmacyRow(pharmacy, {
+        index,
+        entrance: index - seen,
+        today,
+        results: result.results,
+        lang,
+        tr,
+        radarOpen: radar.isOpen(pharmacy.id),
+        onMap: openMap,
+        onRadar: radar.toggle,
+      }),
+    ),
   );
   if (selected) {
     const button = previewButton(selected.id);
@@ -388,11 +260,7 @@ function renderResults() {
     else closeMap();
   }
   // Rows are rebuilt on every render; an open radar keeps running and moves into its new row.
-  if (radarFor) {
-    const button = radarButton(radarFor);
-    if (button) button.closest('li').append(radarHost);
-    else closeRadar();
-  }
+  radar.follow();
 }
 
 function render() {
@@ -413,7 +281,7 @@ $('cancel').addEventListener('click', () => {
   $('locate').focus();
 });
 map.close.addEventListener('click', () => closeMap(true));
-window.addEventListener('pagehide', () => closeRadar());
+window.addEventListener('pagehide', () => radar.close());
 $('show-all').addEventListener('click', () => {
   expanded = !expanded;
   closeMap();
@@ -425,7 +293,7 @@ $('change-location').addEventListener('click', event => {
   $('locate').focus();
 });
 $('language').addEventListener('change', event => {
-  closeRadar();
+  radar.close();
   lang = event.target.value;
   render();
 });

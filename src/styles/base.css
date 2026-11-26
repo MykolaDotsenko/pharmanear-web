@@ -1,0 +1,222 @@
+/* Finnish functionalism: paper, pine, granite, water. No external fonts or assets. */
+
+/* ---------- Base ---------- */
+
+:root {
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  background: var(--paper);
+  color: var(--ink);
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--paper);
+  color: var(--ink);
+  accent-color: var(--accent);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+::selection {
+  background: color-mix(in oklab, var(--accent) 24%, transparent);
+}
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+p {
+  text-wrap: pretty;
+}
+a {
+  color: var(--pine);
+}
+button,
+select {
+  font: inherit;
+  min-height: 48px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-small);
+  padding: 0.62rem 0.9rem;
+  color: var(--ink);
+  background: var(--surface);
+  max-width: 100%;
+}
+button {
+  font-weight: 650;
+  cursor: pointer;
+}
+a:focus-visible,
+button:focus-visible,
+select:focus-visible,
+summary:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 4px;
+  border-radius: var(--radius-small);
+  animation: focus-in 0.22s var(--ease-out);
+}
+h1 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(2.7rem, 5.4vw, 4.75rem);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.045em;
+  margin: 0;
+  max-width: 13ch;
+  overflow-wrap: break-word;
+}
+h2 {
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  margin: 0;
+}
+[hidden] {
+  display: none !important;
+}
+.shell {
+  width: min(100% - 3rem, 72rem);
+  margin-inline: auto;
+}
+.skip {
+  position: absolute;
+  top: -200px;
+  left: 1rem;
+  background: var(--surface);
+  padding: 1rem;
+  z-index: 20;
+}
+.skip:focus {
+  top: 0;
+}
+
+/* ---------- Header ---------- */
+
+.masthead {
+  position: relative;
+  min-height: 92px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  border-bottom: 1px solid var(--line);
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--ink);
+  font-size: 1.3rem;
+  font-weight: 720;
+  letter-spacing: -0.055em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.brand-dot {
+  color: var(--brand);
+  margin-left: -0.55rem;
+}
+.mark {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  color: var(--brand);
+  border: 1px solid var(--brand);
+  border-radius: 3px;
+}
+.mark svg {
+  width: 20px;
+  height: 20px;
+}
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.icon-button {
+  width: 44px;
+  min-height: 44px;
+  height: 44px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  border-color: var(--line);
+  background: transparent;
+  color: var(--pine);
+}
+.icon-button svg {
+  width: 22px;
+  height: 22px;
+}
+.icon-button {
+  transition:
+    background 0.18s,
+    box-shadow 0.18s,
+    transform 0.18s var(--ease-out);
+}
+.icon-button:active {
+  transform: scale(0.94);
+}
+.icon-button[aria-pressed='true'] {
+  /* Solid accent underneath: the gradient only darkens it, so text contrast never drops below the token's. */
+  background: var(--accent)
+    linear-gradient(180deg, var(--accent), color-mix(in oklab, var(--accent) 84%, black));
+  border-color: var(--accent);
+  color: var(--on-accent);
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--accent) 18%, transparent);
+}
+.language {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-left: 0.35rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* ---------- Top bar ---------- */
+
+/* Its own formatting context keeps the header's bottom margin, and so the hanging lights, inside the glass. */
+.topbar {
+  display: flow-root;
+}
+/*
+ * On wide screens the header stays in reach, frosted over the content below it. The scroll padding keeps
+ * whatever is scrolled to, the keyboard focus included, below the header rather than under it.
+ */
+@media (min-width: 761px) {
+  html {
+    scroll-padding-top: 7.5rem;
+  }
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 15;
+    background: color-mix(in oklab, var(--paper) 80%, transparent);
+    -webkit-backdrop-filter: saturate(1.4) blur(14px);
+    backdrop-filter: saturate(1.4) blur(14px);
+  }
+  @supports (animation-timeline: scroll()) {
+    .topbar {
+      animation: lift linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 96px;
+    }
+  }
+}
+@keyframes lift {
+  to {
+    box-shadow: 0 10px 30px -18px color-mix(in oklab, var(--shadow-color) 45%, transparent);
+  }
+}

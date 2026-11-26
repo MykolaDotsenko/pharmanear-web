@@ -1,0 +1,114 @@
+/* ---------- Narrow screens ---------- */
+
+@media (max-width: 760px) {
+  .shell {
+    width: calc(100% - 2rem);
+  }
+  .masthead {
+    min-height: 74px;
+    padding: 0.7rem 0;
+  }
+  .hero {
+    grid-template-columns: 1fr;
+    gap: 1.8rem;
+    padding: 1.8rem 0 1.5rem;
+  }
+  .hero-copy h1 {
+    max-width: 14ch;
+  }
+  .intro {
+    margin: 1rem 0;
+  }
+  .landscape {
+    width: 100%;
+    aspect-ratio: 2.6/1;
+    max-height: 110px;
+  }
+  /* Keep the seasonal details in the visible crop of the compact artwork. */
+  .winter-pines,
+  .winter-ornaments {
+    transform: translateY(-160px);
+  }
+  .winter-gold {
+    transform: translateY(100px);
+  }
+  .winter-snow {
+    transform: translateY(-150px);
+  }
+  footer {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  footer a {
+    grid-column: 2;
+  }
+  body[data-search-state='found'] .hero {
+    padding: 1rem 0 0.85rem;
+  }
+  body[data-search-state='found'] .hero .eyebrow {
+    display: none;
+  }
+  body[data-search-state='found'] h1 {
+    font-size: 1.8rem;
+    margin-bottom: 0.75rem;
+  }
+  body[data-search-state='found'] .privacy-details {
+    margin: 0.15rem 0 0.5rem;
+  }
+  body[data-search-state='found'] .results {
+    padding-top: 1rem;
+  }
+  .status-line {
+    margin-bottom: 0.3rem;
+  }
+  .result-details {
+    margin-bottom: 0.55rem;
+  }
+}
+@media (max-width: 560px) {
+  /* The rank is decorative (the order says it); dropping it gives the two actions room to share a line. */
+  .pharmacy {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'info distance'
+      'actions actions';
+    column-gap: 0.6rem;
+    padding: 0.9rem 0.8rem;
+  }
+  .pharmacy.closest {
+    padding-left: 0.8rem;
+  }
+  .rank {
+    display: none;
+  }
+  .distance,
+  .pharmacy.closest .distance {
+    font-size: 1.3rem;
+  }
+  /* Both actions share a line whenever they fit; long labels in a wide font wrap to a second line rather
+     than widen the page. */
+  .pharmacy-action {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0 1.1rem;
+  }
+}
+@media (max-width: 480px) {
+  .toolbar {
+    width: 100%;
+    gap: 0.4rem;
+  }
+  .language {
+    margin-left: auto;
+  }
+  /* The select keeps its name from the label; only the visible word goes. */
+  #language-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}

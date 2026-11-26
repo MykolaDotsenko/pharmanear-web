@@ -73,12 +73,31 @@ test('device search sends rounded coordinates', async ({ page, context }) => {
   await expect(page.locator('#list li')).toHaveCount(2);
 });
 
-test('map requires explicit action and closes with restored focus', async ({ page }) => {
+test('map requires explicit action and closes with restored focus', async ({ page, context }) => {
   let maps = 0;
+  const dialogs = [];
+  page.on('dialog', dialog => {
+    dialogs.push(dialog.message());
+    return dialog.dismiss();
+  });
+  // A visitor signed in to OpenStreetMap: the embedded map must not carry that cookie.
+  await context.addCookies([
+    {
+      name: 'osm_session',
+      value: 'signed-in',
+      url: 'https://www.openstreetmap.org/',
+      sameSite: 'None',
+      secure: true,
+    },
+  ]);
   await page.route(endpoint, r => fulfill(r, fixture));
   await page.route('https://www.openstreetmap.org/export/embed.html?*', r => {
     maps++;
-    return r.fulfill({ contentType: 'text/html', body: '<p>Mock map</p>' });
+    // The embedded page tries to open a dialog over this one; the sandbox stops it.
+    return r.fulfill({
+      contentType: 'text/html',
+      body: '<p>Mock map</p><script>alert("from the map")</script>',
+    });
   });
   await page.goto('/');
   await page.locator('#search-label').click();
@@ -87,6 +106,10 @@ test('map requires explicit action and closes with restored focus', async ({ pag
   expect(maps).toBe(0);
   await button.click();
   await expect(page.locator('#map-frame iframe')).toHaveAttribute('src', /marker=60.452%2C22.267/);
+  await expect(page.frameLocator('#map-frame iframe').locator('p')).toHaveText('Mock map');
+  const embedded = page.frame({ url: /openstreetmap/ });
+  expect(await embedded.evaluate(() => [document.cookie, window.credentialless])).toEqual(['', true]);
+  expect(dialogs).toEqual([]);
   // The map opens inside the pharmacy's own row.
   await expect(page.locator('#list li').first().locator('#map-panel')).toBeVisible();
   await page.locator('#close-map').click();

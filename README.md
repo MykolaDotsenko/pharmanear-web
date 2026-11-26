@@ -47,7 +47,8 @@ is never used. See [data/README.md](data/README.md) and
 
 No account, analytics, cookies or location history; the only thing stored is the theme you pick, in this
 browser. The live fallback and the optional
-map are third-party services that receive normal network metadata, including the IP address. OpenStreetMap can
+map are third-party services that receive normal network metadata, including the IP address. The map loads only
+on request, without cookies or referrer, in a sandbox that cannot act on this page. OpenStreetMap can
 be incomplete, a building centre is not an entrance, and the nearest mapped pharmacy is not a guarantee of the
 nearest real one. Production use would need an SLA-backed or self-hosted data source and a licensing review;
 see [ADR 0001](docs/0001-search-and-privacy.md).
@@ -85,12 +86,15 @@ Formatting is checked in CI: `npm run format:check`, or `npm run format` to fix.
 | `src/provider.js`             | Overpass transport: timeout, cancellation, one independent fallback      |
 | `src/search-controller.js`    | Search lifecycle: one operation at a time, stale results never published |
 | `src/app.js`                  | DOM rendering and search events                                          |
+| `src/pharmacy-row.js`         | One result row: details, hours, sources and its three actions            |
+| `src/row-radar.js`            | The radar inside a row: one at a time, focus, follows re-renders         |
+| `src/styles/`                 | One stylesheet per concern, linked in cascade order                      |
 | `src/hours.js`                | Localized opening hours and the rule that applies today                  |
 | `src/holidays.js`             | Today in Finland: weekday and public holidays                            |
 | `src/theme.js`                | Theme toggle, its memory and the circular reveal                         |
 | `src/effects.js`              | Decorative pointer depth and the results view transition                 |
 | `src/festive.js`              | Seasonal lights, snowflakes, snowfall and melody, and their toggles      |
-| `src/radar-*.js`, `radar.css` | Pharmacy radar: geometry, sensor session and view                        |
+| `src/radar-*.js`              | Pharmacy radar: geometry, sensor session and view                        |
 | `src/pharmacy-details.js`     | Checked sources for a few pharmacies, and possible duplicate entries     |
 | `src/theme-init.js`           | Sets the theme and season before the first paint                         |
 | `src/strings.js`              | English, Finnish and Swedish copy and the browser-language default       |
@@ -103,11 +107,12 @@ Formatting is checked in CI: `npm run format:check`, or `npm run format` to fix.
 ## Verification
 
 Every push runs formatting, unit tests, Playwright tests (user flows, every axe WCAG 2.2 A/AA and
-best-practice rule in light, dark, Christmas, Finnish, Swedish and 320 px layouts, keyboard order, an
-accessibility-tree snapshot, text contrast on rendered pixels, forced colours, and an offline render of the
-melody) and the production build. Separate workflows run the real catalog in a browser, rebuild the catalog weekly and check
-the deployed data after each publication. [docs/review.md](docs/review.md) records what is verified
-automatically and what still needs a person.
+best-practice rule in light, dark, Christmas, Finnish, Swedish and 320 px layouts, keyboard order, a scripted
+screen-reader pass, an accessibility-tree snapshot, text contrast on rendered pixels, forced colours, and an
+offline render of the melody) and the production build. Separate workflows run the real catalog in a browser,
+rebuild the catalog weekly and check the deployed data after each publication. Vercel deploys `main` through
+its Git integration, so CI needs no deployment secret. [docs/review.md](docs/review.md) records what is
+verified automatically and what still needs a person.
 
 ## Verification evidence
 

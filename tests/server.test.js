@@ -68,3 +68,16 @@ test('unsupported methods are rejected with an Allow header', async () => {
     assert.equal(response.headers.get('allow'), 'GET, HEAD');
   });
 });
+
+test('the page links every stylesheet, each one once, and links nothing that is missing', async () => {
+  const { readFile, readdir } = await import('node:fs/promises');
+  const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  const linked = [...html.matchAll(/<link rel="stylesheet" href="\.\/(src\/styles\/[^"]+)"/g)].map(m => m[1]);
+  const present = (await readdir(new URL('../src/styles/', import.meta.url)))
+    .filter(name => name.endsWith('.css'))
+    .map(name => `src/styles/${name}`);
+  assert.deepEqual([...linked].sort(), [...present].sort());
+  assert.equal(new Set(linked).size, linked.length);
+  // The palette comes first because every other file reads its custom properties.
+  assert.equal(linked[0], 'src/styles/palette.css');
+});

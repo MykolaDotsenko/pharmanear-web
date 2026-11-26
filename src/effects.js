@@ -1,7 +1,7 @@
 /**
  * Decorative pointer effects and page transitions. None of them carries information, every one is skipped
  * with reduced motion or without a fine hover pointer, and the script only sets custom properties, which
- * the stylesheet turns into light and depth (see style.css).
+ * the stylesheet turns into light and depth (see styles/motion.css and styles/enhancements.css).
  */
 const finePointer = matchMedia('(hover: hover) and (pointer: fine)');
 

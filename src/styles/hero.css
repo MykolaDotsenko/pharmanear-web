@@ -1,0 +1,206 @@
+/* ---------- Hero ---------- */
+
+/*
+ * A faint aurora behind the hero: three radial glows that drift slowly. Decorative only. The mask fades every
+ * edge, so the glow has no visible border, and the drift stays inside the box, so it never widens the page.
+ */
+.hero {
+  position: relative;
+  isolation: isolate;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -12% 0 0;
+  pointer-events: none;
+  -webkit-mask-image: radial-gradient(closest-side, #000 50%, transparent);
+  mask-image: radial-gradient(closest-side, #000 50%, transparent);
+  opacity: var(--aurora-strength);
+  background:
+    radial-gradient(
+      40% 55% at 18% 30%,
+      color-mix(in oklab, var(--aurora-1) 55%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      35% 50% at 55% 18%,
+      color-mix(in oklab, var(--aurora-2) 50%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      30% 45% at 85% 40%,
+      color-mix(in oklab, var(--aurora-3) 45%, transparent),
+      transparent 70%
+    );
+}
+body[data-outcome] .hero::before {
+  opacity: calc(var(--aurora-strength) * 0.55);
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: clamp(2rem, 6vw, 6rem);
+  padding: clamp(2.6rem, 7vw, 5.5rem) 0 3.2rem;
+  align-items: center;
+}
+.hero-copy {
+  min-width: 0;
+}
+.eyebrow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0.6em;
+  font-size: 0.73rem;
+  letter-spacing: 0.16em;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--brand);
+  margin: 0 0 1.1rem;
+}
+.intro {
+  font-size: 1.08rem;
+  max-width: 43ch;
+  margin: 1.35rem 0 1.75rem;
+  color: var(--muted);
+}
+.primary {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--on-accent);
+  /* Solid accent underneath: the gradient only darkens it, so text contrast never drops below the token's. */
+  background: var(--accent)
+    linear-gradient(180deg, var(--accent), color-mix(in oklab, var(--accent) 84%, black));
+  border-color: color-mix(in oklab, var(--accent) 80%, black);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, white 18%, transparent),
+    0 10px 24px -12px color-mix(in oklab, var(--accent) 75%, transparent);
+  border-radius: 12px;
+  min-height: 56px;
+  max-width: 24rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.8rem 1.1rem;
+  transition:
+    filter 0.18s,
+    transform 0.18s var(--ease-out),
+    box-shadow 0.18s;
+}
+.primary:active {
+  transform: scale(0.985);
+}
+.primary {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+.primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    color-mix(in oklab, white 20%, transparent) 50%,
+    transparent 65%
+  );
+  translate: -110% 0;
+}
+.primary svg {
+  width: 23px;
+  height: 23px;
+  flex: none;
+}
+.secondary {
+  background: transparent;
+  border-color: var(--pine);
+  color: var(--pine);
+  transition: background 0.18s;
+}
+.text-button {
+  background: transparent;
+  border: 0;
+  color: var(--pine);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.privacy-details {
+  max-width: 24rem;
+  margin: 0.5rem 0 1.15rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.privacy-details summary,
+.result-details summary {
+  min-height: 44px;
+  display: list-item;
+  align-content: center;
+  cursor: pointer;
+  color: var(--pine);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.privacy {
+  max-width: 55ch;
+  margin: 0 0 0.7rem;
+}
+form label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 650;
+  margin-bottom: 0.45rem;
+}
+.form-row {
+  display: flex;
+  gap: 0.6rem;
+  max-width: 24rem;
+}
+.form-row select {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Decorative contour art; never an actual map. */
+.landscape {
+  overflow: hidden;
+  aspect-ratio: 1/1.06;
+  max-height: 540px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+}
+.landscape svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.land-base {
+  fill: var(--land);
+}
+.land-water {
+  fill: var(--water);
+}
+.contours,
+.art-ticks {
+  stroke: var(--contour);
+}
+.art-ring {
+  stroke: var(--pine);
+  stroke-opacity: 0.45;
+}
+.art-disc {
+  fill: var(--accent);
+}
+.art-cross {
+  stroke: var(--on-accent);
+}
+.locator-art {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: arrive 0.65s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}

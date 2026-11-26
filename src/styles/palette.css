@@ -1,0 +1,106 @@
+/* The palette: light, dark and the Christmas season. theme-init.js sets data-theme (light or dark) and
+   data-season on <html> before the first paint. */
+
+/* ---------- Tokens ---------- */
+
+:root {
+  color-scheme: light;
+  --paper: #f6f4ee;
+  --surface: #fffdf8;
+  --ink: #202b28;
+  --muted: #52605a;
+  --pine: #17483d;
+  --on-pine: #fff;
+  --line: #d4d8ce;
+  --focus: #a34e21;
+  --water: #cddcda;
+  --land: #dee5d9;
+  --contour: #819c92;
+  --wash: #e7ede4;
+  /* Roles that the season recolours. */
+  --accent: var(--pine);
+  --on-accent: var(--on-pine);
+  --brand: var(--pine);
+  --gold: var(--line);
+  --snow: #fffdf5;
+  --flake: #9db4bf;
+  /* Shape, depth and motion. Shadows are tinted by the ink colour, so they belong to the palette. */
+  --radius: 14px;
+  --radius-small: 8px;
+  --shadow-color: var(--ink);
+  --shadow-sm:
+    0 1px 2px color-mix(in oklab, var(--shadow-color) 7%, transparent),
+    0 3px 10px -4px color-mix(in oklab, var(--shadow-color) 14%, transparent);
+  --shadow-md:
+    0 2px 4px color-mix(in oklab, var(--shadow-color) 6%, transparent),
+    0 14px 32px -14px color-mix(in oklab, var(--shadow-color) 28%, transparent);
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --aurora-1: #4f9b85;
+  --aurora-2: #8fc7b0;
+  --aurora-3: #a7b9e0;
+  --aurora-strength: 0.32;
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --paper: #202724;
+  --surface: #29322e;
+  --ink: #f1f0e8;
+  --muted: #bdc9c1;
+  --pine: #aed5bd;
+  --on-pine: #172e24;
+  --line: #46574e;
+  --focus: #f5b181;
+  --water: #334d4b;
+  --land: #3c5143;
+  --contour: #789b8b;
+  --wash: #303f36;
+  --flake: #f2f4ef;
+  --shadow-color: #000;
+  --aurora-strength: 0.42;
+}
+
+/* Nordic Christmas: evergreen wayfinding, cranberry actions, candlelight paper. Gold is decorative;
+   every text colour keeps at least 4.5:1 contrast. */
+:root[data-season='christmas'] {
+  --paper: #fff8ed;
+  --surface: #fffcf5;
+  --ink: #302821;
+  --muted: #62534a;
+  --pine: #194b38;
+  --on-pine: #fffdf5;
+  --line: #dbcab5;
+  --focus: #a04e24;
+  --water: #a8c6b8;
+  --land: #e9dfc8;
+  --contour: #5f8b74;
+  --wash: #e5eddf;
+  --accent: #8b263b;
+  --on-accent: #fff8ed;
+  --brand: #8b263b;
+  --gold: #aa7934;
+  --snow: #fffdf5;
+  --aurora-1: #5f9e7c;
+  --aurora-2: #d9b98a;
+  --aurora-3: #c98a97;
+}
+:root[data-season='christmas'][data-theme='dark'] {
+  --paper: #202a24;
+  --surface: #2d3830;
+  --ink: #fff3df;
+  --muted: #d3c9b9;
+  --pine: #b5d9bd;
+  --on-pine: #172e24;
+  --line: #59685b;
+  --focus: #efb773;
+  --water: #315b49;
+  --land: #414e38;
+  --contour: #91ad85;
+  --wash: #34473a;
+  --accent: #ae3e54;
+  --on-accent: #fff9ee;
+  --brand: #f0a9b5;
+  --gold: #e4bd76;
+  --snow: #f5ecdc;
+  --shadow-color: #000;
+  --aurora-strength: 0.42;
+}

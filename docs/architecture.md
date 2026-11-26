@@ -10,17 +10,18 @@ app.js ─┬─► search-controller.js ─► core.js
         ├─► catalog.js ─┬─────────► core.js
         │               └─► provider.js
         ├─► core.js            (map URLs)
-        ├─► hours.js           (opening hours, today's rule)
+        ├─► pharmacy-row.js ─┬─► core.js, hours.js       (one result row)
+        │                    └─► pharmacy-details.js     (checked sources, possible duplicates)
+        ├─► row-radar.js ──► radar-view.js ─┬─► radar-session.js ─► radar-geometry.js   (loaded on first use)
+        │                                   └─► radar-geometry.js
         ├─► holidays.js        (today in Finland)
         ├─► theme.js           (theme toggle and reveal)
         ├─► effects.js         (pointer depth, results transition)
         ├─► festive.js         (lights, snowflakes, snow, melody)
-        ├─► pharmacy-details.js (checked sources, possible duplicates)
-        ├─► radar-view.js ─┬─► radar-session.js ─► radar-geometry.js   (loaded on first use)
-        │                  └─► radar-geometry.js
         └─► strings.js
 
 theme-init.js                  (classic script in <head>, before the first paint)
+styles/*.css                   (palette, base, hero, results, season, motion, narrow, enhancements, radar)
 ```
 
 `app.js` passes `catalog.js`'s lookup to the controller, so the controller never imports the catalog or the
@@ -36,7 +37,16 @@ network.
   the previous one, and a superseded operation can never publish. It publishes one frozen state object per
   change. Transport and geolocation are injected, so it is tested without a browser.
 - **`app.js`** renders that state and binds the search events. It holds only presentation state: language,
-  expanded list and the open map. Theme, season and decoration are wired by their own modules.
+  expanded list and the open map. Theme, season and decoration are wired by their own modules. The live
+  status is written only when its words change, so a re-render never repeats an announcement.
+- **`pharmacy-row.js`** builds one result row from a pharmacy and the page's language; `app.js` passes the
+  map and radar actions in, so the row knows nothing of either.
+- **`row-radar.js`** is the radar's life inside a row: one at a time, opened and closed by its row's button,
+  focus returned on close, kept running when rows are rebuilt, and a view that loads too late dropped. Its
+  rules are unit-tested with a small fake DOM.
+- **`styles/`** holds one stylesheet per concern, linked in cascade order: the palette first, because every
+  other file reads its custom properties, then base, hero, results, season, motion, narrow screens,
+  progressive enhancements and the radar. A unit test keeps the links and the files in step.
 - **`strings.js`** holds all copy; a unit test keeps the three languages' keys identical.
 - **`hours.js`** turns the common OpenStreetMap opening-hours syntax (weekday ranges and lists, public holidays,
   time ranges, `off`, `24/7`) into the interface language; about 98 % of the catalog's values. Anything else is
@@ -99,7 +109,7 @@ compass permission.
 
 ## Visual layer
 
-Depth and motion are CSS, with small hooks in `app.js`, `theme.js` and `effects.js`; nothing is added to the
+Depth and motion are CSS (`styles/`), with small hooks in `app.js`, `theme.js` and `effects.js`; nothing is added to the
 bundle and nothing needs a relaxed CSP, because the scripts only set custom properties through the CSSOM.
 Nothing moves on its own for more than five seconds (WCAG 2.2.2): continuous movement follows scrolling or
 the pointer, or a feature the visitor switched on.
@@ -120,7 +130,7 @@ the pointer, or a feature the visitor switched on.
 - **Artwork depth**: under a mouse pointer the artwork leans in 3D (`--lean-x`, `--lean-y`), its contour,
   locator and winter layers shift by different amounts, and a soft glare follows the pointer.
 - **Primary button**: a gradient with an inner highlight and tinted shadow, and a sheen that crosses it on
-  hover. A faint paper grain (`grain.svg`, fractal noise) lies under the content.
+  hover. A faint paper grain (`styles/grain.svg`, fractal noise) lies under the content.
 - **View transitions**: the theme change reveals the new theme in a circle growing from the toggle; when
   results first appear, the page cross-fades while the heading, the main action and the artwork glide to
   their compact places. `data-transition` on `<html>` scopes each one's CSS. Without the API, or with
