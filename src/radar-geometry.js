@@ -13,7 +13,10 @@ export function bearing(from, to) {
   const b = rad(to.lat);
   const delta = rad(to.lon - from.lon);
   return degrees(
-    (Math.atan2(Math.sin(delta) * Math.cos(b), Math.cos(a) * Math.sin(b) - Math.sin(a) * Math.cos(b) * Math.cos(delta)) *
+    (Math.atan2(
+      Math.sin(delta) * Math.cos(b),
+      Math.cos(a) * Math.sin(b) - Math.sin(a) * Math.cos(b) * Math.cos(delta),
+    ) *
       180) /
       Math.PI,
   );
@@ -59,12 +62,20 @@ export function radarPoint(angle, heading, meters, range) {
 
 export function isNear(meters, accuracy, wasNear = false) {
   const limit = wasNear ? 40 : 30;
-  return Number.isFinite(meters) && meters >= 0 && meters <= limit &&
-    Number.isFinite(accuracy) && accuracy >= 0 && accuracy <= limit;
+  return (
+    Number.isFinite(meters) &&
+    meters >= 0 &&
+    meters <= limit &&
+    Number.isFinite(accuracy) &&
+    accuracy >= 0 &&
+    accuracy <= limit
+  );
 }
 
 export function rankedTargets(pharmacies, position, targetId) {
-  const ranked = pharmacies.filter(validPoint).map(p => ({ ...p, distance: distance(position, p) }))
+  const ranked = pharmacies
+    .filter(validPoint)
+    .map(p => ({ ...p, distance: distance(position, p) }))
     .sort((a, b) => a.distance - b.distance || a.id.localeCompare(b.id));
   const nearest = ranked.slice(0, 8);
   const target = ranked.find(p => p.id === targetId);
