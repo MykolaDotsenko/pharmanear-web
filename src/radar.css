@@ -1,5 +1,13 @@
+/* The radar opens inside its pharmacy's row, across the whole card. */
+.radar-host {
+  grid-column: 1 / -1;
+}
+.radar-panel h4 {
+  margin: 0;
+  font-size: 1.05rem;
+}
 .radar-panel {
-  margin: 1rem 0;
+  margin: 1rem 0 0.25rem;
   padding: 1rem;
   border: 1px solid var(--line);
   border-radius: 16px;

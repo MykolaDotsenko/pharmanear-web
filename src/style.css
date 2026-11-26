@@ -1234,6 +1234,10 @@ body[data-outcome] h1 {
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
   }
+  /* A card holding an open map or radar stays put under the pointer. */
+  .pharmacy:has(.radar-panel, .map-panel:not([hidden])):hover {
+    transform: none;
+  }
   .pharmacy.closest:hover {
     box-shadow:
       inset 4px 0 0 var(--accent),

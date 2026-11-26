@@ -53,7 +53,8 @@ export function openRadar({
   const panel = node('section', '', container, 'radar-panel');
   panel.setAttribute('aria-labelledby', 'radar-title');
   const header = node('div', '', panel, 'result-header');
-  const title = node('h3', t.title, header);
+  // Inside a pharmacy's row, under its h3.
+  const title = node('h4', t.title, header);
   title.id = 'radar-title';
   title.tabIndex = -1;
   const close = node('button', t.close, header, 'text-button');

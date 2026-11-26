@@ -20,6 +20,10 @@ let expanded = false;
 let selected = null;
 let radar = null;
 let radarGeneration = 0;
+// The pharmacy whose row holds the open radar; the host moves into its row, like the map panel.
+let radarFor = null;
+const radarHost = document.createElement('div');
+radarHost.className = 'radar-host';
 // The result set on screen and how many of its rows the visitor has already seen arrive.
 let shownResult = null;
 let shownCount = 0;
@@ -136,8 +140,6 @@ function renderControls() {
   $('result-tools').hidden = !found;
   $('hours-disclosure').hidden = !found;
   $('hours-disclosure').textContent = tr('hoursDisclosure');
-  $('open-radar').hidden = !found;
-  $('open-radar').textContent = tr('radar');
 
   const showAll = $('show-all');
   showAll.hidden = !found || result.results.length <= initialLimit;
@@ -184,33 +186,46 @@ function openMap(pharmacy) {
   map.heading.focus();
 }
 
+function radarButton(id) {
+  return [...document.querySelectorAll('[data-radar-id]')].find(button => button.dataset.radarId === id);
+}
+
 function closeRadar(restoreFocus = false) {
+  const id = radarFor;
   radarGeneration++;
   radar?.close();
   radar = null;
-  $('radar-host').replaceChildren();
-  $('open-radar').setAttribute('aria-expanded', 'false');
-  if (restoreFocus) $('open-radar').focus();
+  radarFor = null;
+  radarHost.replaceChildren();
+  radarHost.remove();
+  for (const button of document.querySelectorAll('[data-radar-id]'))
+    button.setAttribute('aria-expanded', 'false');
+  if (restoreFocus && id) radarButton(id)?.focus();
 }
 
-async function showRadar() {
+/** Opens the radar inside the chosen pharmacy's row, pointing to it; its button closes it again. */
+async function showRadar(pharmacy) {
   if (state.status !== 'found') return;
-  if ($('open-radar').getAttribute('aria-expanded') === 'true') {
+  if (radarFor === pharmacy.id) {
     closeRadar(true);
     return;
   }
+  closeRadar();
   closeMap();
   const generation = ++radarGeneration;
-  $('open-radar').setAttribute('aria-expanded', 'true');
-  $('radar-host').textContent = tr('radarLoading');
+  const button = radarButton(pharmacy.id);
+  radarFor = pharmacy.id;
+  button.setAttribute('aria-expanded', 'true');
+  button.closest('li').append(radarHost);
+  radarHost.textContent = tr('radarLoading');
   try {
     const { openRadar } = await import('./radar-view.js');
     if (generation !== radarGeneration) return;
-    $('radar-host').replaceChildren();
+    radarHost.replaceChildren();
     radar = openRadar({
-      container: $('radar-host'),
+      container: radarHost,
       pharmacies: state.result.results,
-      targetId: state.result.results[0].id,
+      targetId: pharmacy.id,
       language: lang,
       text: tr('radarView'),
       unnamed: tr('unnamed'),
@@ -220,8 +235,9 @@ async function showRadar() {
     });
   } catch {
     if (generation !== radarGeneration) return;
-    closeRadar();
-    $('radar-host').textContent = tr('radarError');
+    radarFor = null;
+    button.setAttribute('aria-expanded', 'false');
+    radarHost.textContent = tr('radarError');
   }
 }
 
@@ -315,13 +331,21 @@ function pharmacyRow(pharmacy, index, entrance, today, results) {
   preview.setAttribute('aria-describedby', 'map-disclosure');
   preview.addEventListener('click', () => openMap(pharmacy));
 
-  const link = element('a', '', tr('map'));
+  const radarOpen = element('button', 'map-preview', tr('radarHere'));
+  radarOpen.type = 'button';
+  radarOpen.dataset.radarId = pharmacy.id;
+  radarOpen.setAttribute('aria-label', `${tr('radarHere')}: ${name}`);
+  radarOpen.setAttribute('aria-expanded', String(radarFor === pharmacy.id));
+  radarOpen.addEventListener('click', () => showRadar(pharmacy));
+
+  // A short visible label keeps three actions on one line on phones; the accessible name says it all.
+  const link = element('a', '', tr('mapShort'));
   link.href = mapsUrl(pharmacy);
   link.rel = 'noreferrer';
   link.setAttribute('aria-label', `${tr('map')}: ${name}`);
 
   const action = element('div', 'pharmacy-action');
-  action.append(preview, link);
+  action.append(preview, radarOpen, link);
   row.append(rank, info, element('span', 'distance', formatDistance(pharmacy.distance, lang)), action);
   return row;
 }
@@ -363,6 +387,12 @@ function renderResults() {
     if (button) button.closest('li').append(map.panel);
     else closeMap();
   }
+  // Rows are rebuilt on every render; an open radar keeps running and moves into its new row.
+  if (radarFor) {
+    const button = radarButton(radarFor);
+    if (button) button.closest('li').append(radarHost);
+    else closeRadar();
+  }
 }
 
 function render() {
@@ -383,7 +413,6 @@ $('cancel').addEventListener('click', () => {
   $('locate').focus();
 });
 map.close.addEventListener('click', () => closeMap(true));
-$('open-radar').addEventListener('click', showRadar);
 window.addEventListener('pagehide', () => closeRadar());
 $('show-all').addEventListener('click', () => {
   expanded = !expanded;

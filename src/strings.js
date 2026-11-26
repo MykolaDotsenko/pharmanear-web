@@ -4,7 +4,8 @@
  */
 export const messages = {
   en: {
-    radar: 'Pharmacy radar',
+    radarHere: 'Radar',
+    mapShort: 'OpenStreetMap',
     radarLoading: 'Opening radar…',
     radarError: 'Radar could not open. Try again.',
     radarView: {
@@ -116,7 +117,8 @@ export const messages = {
     },
   },
   fi: {
-    radar: 'Apteekkitutka',
+    radarHere: 'Tutka',
+    mapShort: 'OpenStreetMap',
     radarLoading: 'Avataan tutkaa…',
     radarError: 'Tutkaa ei voitu avata. Yritä uudelleen.',
     radarView: {
@@ -228,7 +230,8 @@ export const messages = {
     },
   },
   sv: {
-    radar: 'Apoteksradar',
+    radarHere: 'Radar',
+    mapShort: 'OpenStreetMap',
     radarLoading: 'Öppnar radarn…',
     radarError: 'Radarn kunde inte öppnas. Försök igen.',
     radarView: {

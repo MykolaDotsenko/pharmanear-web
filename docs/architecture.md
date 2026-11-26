@@ -71,7 +71,7 @@ network.
 
 ## Pharmacy radar
 
-The radar is loaded on first use. `radar-view.js` first explains what it uses and asks for nothing; the
+Each result card has a **Radar** button; the radar opens inside that card, pointing to its pharmacy, and moves with the card when rows are re-rendered. Only one radar or map is open at a time. The radar is loaded on first use. `radar-view.js` first explains what it uses and asks for nothing; the
 **Start radar** click requests compass access (Safari shows that prompt only inside a click) and starts
 `radar-session.js`, which owns a high-accuracy location watch, the orientation listeners and a screen wake
 lock.

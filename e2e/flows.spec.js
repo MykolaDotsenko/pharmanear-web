@@ -576,11 +576,16 @@ test('on a phone the actions share one line and nothing widens the page', async 
   await page.goto('/');
   await page.locator('#search-label').click();
   const row = page.locator('#list li').first();
-  // Same row: the two boxes overlap vertically.
-  const preview = await row.locator('.map-preview').boundingBox();
-  const link = await row.locator('.pharmacy-action a').boundingBox();
-  expect(link.y).toBeLessThan(preview.y + preview.height);
-  expect(preview.y).toBeLessThan(link.y + link.height);
+  // Same row: map preview, radar and the OpenStreetMap link overlap vertically.
+  const boxes = await row
+    .locator('.pharmacy-action')
+    .locator('button, a')
+    .evaluateAll(items => items.map(item => item.getBoundingClientRect().toJSON()));
+  expect(boxes).toHaveLength(3);
+  for (const box of boxes.slice(1)) {
+    expect(box.y).toBeLessThan(boxes[0].y + boxes[0].height);
+    expect(boxes[0].y).toBeLessThan(box.y + box.height);
+  }
   await expect(row.locator('.rank')).toBeHidden();
 
   // Longer labels may wrap with wider fonts, but never past the edge of a 320 px screen.
@@ -610,6 +615,7 @@ test('the results read as a structured list to assistive technology', async ({ p
           - paragraph: Mapped hours (unverified) Mon–Fri 09:00–18:00 today · Sat 10:00–14:00 · Public holidays closed
           - text: 31 m
           - 'button "Map preview: Near pharmacy"'
+          - 'button "Radar: Near pharmacy"'
           - 'link "Open in OpenStreetMap: Near pharmacy"'
         - listitem:
           - heading "Far pharmacy" [level=3]
@@ -618,6 +624,7 @@ test('the results read as a structured list to assistive technology', async ({ p
           - 'link "Check opening hours: Far pharmacy"'
           - text: 2.2 km
           - 'button "Map preview: Far pharmacy"'
+          - 'button "Radar: Far pharmacy"'
           - 'link "Open in OpenStreetMap: Far pharmacy"'
       - link "Change location"
       - paragraph:

@@ -18,7 +18,7 @@ affiliated with Treat Health and not medical advice.
   and marks the rule for today in Finland, public holidays included. Mapped hours are labelled as unverified
   and never turned into an "open now" claim; a handful of pharmacies whose hours were checked against their
   own site show that date for ninety days. Rows without hours link to Apteekki.fi.
-- An optional pharmacy radar points to a chosen result in a straight line, from live GPS and, where allowed,
+- A **Radar** button on every result opens, inside that card, a radar that points to it in a straight line, from live GPS and, where allowed,
   the compass. It explains itself before the browser asks for anything, gives no direction while the
   pharmacy is within the GPS uncertainty, never asks again after a denial, sends and stores nothing, and
   stops when closed or when the page is hidden.

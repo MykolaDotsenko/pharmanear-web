@@ -36,7 +36,7 @@ async function searchAndOpen(page) {
   await page.goto('/');
   await page.locator('#search-label').click();
   await expect(page.locator('#list li')).toHaveCount(2);
-  await page.locator('#open-radar').click();
+  await page.getByRole('button', { name: 'Radar: Near pharmacy' }).click();
 }
 
 test('the radar explains itself and asks for nothing until it is started', async ({ page }) => {
@@ -69,8 +69,36 @@ test('the radar keeps the chosen pharmacy and stops live GPS on close', async ({
   await page.getByRole('button', { name: 'Close radar' }).click();
   await expect(page.locator('#radar-title')).toHaveCount(0);
   expect(await page.evaluate(() => window.radarClears)).toBe(1);
-  await expect(page.locator('#open-radar')).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Radar: Near pharmacy' })).toBeFocused();
   await expect(page.locator('#list li')).toHaveCount(2);
+});
+
+test('each card opens the radar on its own pharmacy, inside that card, one at a time', async ({ page }) => {
+  await fakeSensors(page);
+  await withoutCatalog(page);
+  await page.route(endpoint, route => fulfill(route, fixture));
+  await page.goto('/');
+  await page.locator('#search-label').click();
+  const near = page.getByRole('button', { name: 'Radar: Near pharmacy' });
+  const far = page.getByRole('button', { name: 'Radar: Far pharmacy' });
+  await far.click();
+  await expect(far).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.locator('#list li').nth(1).locator('.radar-panel')).toBeVisible();
+  await expect(page.locator('#radar-target')).toHaveValue('node/1');
+
+  // Opening another card's radar closes the first; its own button closes it again.
+  await near.click();
+  await expect(page.locator('.radar-panel')).toHaveCount(1);
+  await expect(page.locator('#list li').first().locator('.radar-panel')).toBeVisible();
+  await expect(far).toHaveAttribute('aria-expanded', 'false');
+  await near.click();
+  await expect(page.locator('.radar-panel')).toHaveCount(0);
+  await expect(near).toBeFocused();
+
+  // The map and the radar never share the page.
+  await far.click();
+  await page.getByRole('button', { name: 'Map preview: Near pharmacy' }).click();
+  await expect(page.locator('.radar-panel')).toHaveCount(0);
 });
 
 test('a direction is given only outside the GPS uncertainty', async ({ page }) => {
