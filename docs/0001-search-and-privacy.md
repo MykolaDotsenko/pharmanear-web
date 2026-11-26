@@ -13,3 +13,6 @@ Apple MapKit search alone is convenient but would make results inconsistent acro
 
 ## Consequences
 Simple architecture and no keys, but third-party availability and map accuracy are limitations. Rounding reduces precision shared externally but is not anonymization. Distances are estimates; users should verify opening hours and travel routes. Provider IP logging and retention have not been independently audited.
+
+## Optional map and hours
+The explicit map preview embeds OpenStreetMap with the selected pharmacy coordinates only; the map provider receives normal network metadata. The list remains available if the map fails. OSM opening_hours strings are community-maintained, displayed without an open-now inference and must be checked against the pharmacy or the Finnish Pharmacy Association directory.

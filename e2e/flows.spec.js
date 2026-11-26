@@ -35,3 +35,39 @@ test('device search sends rounded coordinates',async({page,context})=>{
   await page.route(endpoint,r=>{const body=new URLSearchParams(r.request().postData());expect(body.get('data')).toContain('3000,60.45,22.27');expect(body.get('data')).not.toContain('60.4518');return fulfill(r,fixture);});
   await page.goto('/');await page.getByRole('button',{name:'Use my location'}).click();await expect(page.locator('#list li')).toHaveCount(2);
 });
+
+test('map requires explicit action and closes with restored focus',async({page})=>{
+ let maps=0;
+ await page.route(endpoint,r=>fulfill(r,fixture));
+ await page.route('https://www.openstreetmap.org/export/embed.html?*',r=>{maps++;return r.fulfill({contentType:'text/html',body:'<p>Mock map</p>'});});
+ await page.goto('/');await page.locator('#search-label').click();
+ const button=page.getByRole('button',{name:'Map preview: Near pharmacy'});
+ await expect(button).toBeVisible();expect(maps).toBe(0);
+ await button.click();await expect(page.locator('#map-frame iframe')).toHaveAttribute('src',/marker=60.452%2C22.267/);
+ await page.locator('#close-map').click();await expect(page.locator('#map-panel')).toBeHidden();await expect(button).toBeFocused();
+});
+test('missing or unverified hours never become an open-now claim',async({page})=>{
+ await page.route(endpoint,r=>fulfill(r,{elements:[{...fixture.elements[1],tags:{...fixture.elements[1].tags,opening_hours:'Mo-Fr 09:00-18:00'}},fixture.elements[0]]}));
+ await page.goto('/');await page.locator('#search-label').click();
+ await expect(page.locator('#list li').first()).toContainText('Mapped hours (unverified): Mo-Fr 09:00-18:00');
+ await expect(page.locator('#list li').last()).toContainText('Hours not listed');
+});
+test('capture desktop and mobile screenshots with synthetic results',async({page},testInfo)=>{
+ await page.route(endpoint,r=>fulfill(r,fixture));
+ await page.setViewportSize({width:1440,height:1000});await page.goto('/');await page.locator('#search-label').click();await expect(page.locator('#list li')).toHaveCount(2);
+ await page.screenshot({path:testInfo.outputPath('desktop.png'),fullPage:true,animations:'disabled'});
+ await page.setViewportSize({width:390,height:844});await page.screenshot({path:testInfo.outputPath('mobile.png'),fullPage:true,animations:'disabled'});
+});
+
+test.describe('automated accessibility checks',()=>{
+ test.use({bypassCSP:true});
+ test('no serious or critical axe WCAG A/AA issues in idle and results states',async({page})=>{
+  await page.route(endpoint,r=>fulfill(r,fixture));
+  await page.goto('/');
+  await page.addScriptTag({path:'node_modules/axe-core/axe.min.js'});
+  const audit=()=>page.evaluate(async()=>{const result=await window.axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']}});return result.violations.filter(v=>['serious','critical'].includes(v.impact)).map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)}));});
+  expect(await audit()).toEqual([]);
+  await page.locator('#search-label').click();await expect(page.locator('#list li')).toHaveCount(2);
+  expect(await audit()).toEqual([]);
+ });
+});

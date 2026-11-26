@@ -7,6 +7,7 @@
   <meta name="description" content="Find nearby pharmacies without an account.">
   <meta name="theme-color" content="#f6f4ee">
   <title>PharmaNear — Find a pharmacy</title>
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
   <link rel="stylesheet" href="./src/style.css">
   <script type="module" src="./src/app.js"></script>
 </head>
@@ -51,7 +52,13 @@
       <div class="result-header"><h2 id="results-heading">Nearby pharmacies</h2><button id="cancel" class="text-button" type="button" hidden>Cancel</button></div>
       <div class="status-line"><span class="status-dot" aria-hidden="true"></span><p id="status" role="status" aria-live="polite" aria-atomic="true">Choose your location to start.</p></div>
       <div id="loading-art" class="loading-art" aria-hidden="true" hidden><i></i><i></i><i></i></div>
+      <p id="map-disclosure" class="map-disclosure" hidden></p>
+      <section id="map-panel" class="map-panel" aria-labelledby="map-heading" hidden>
+        <div class="result-header"><h3 id="map-heading" tabindex="-1"></h3><button type="button" id="close-map" class="text-button">Close map</button></div>
+        <p id="map-privacy"></p><div id="map-frame"></div>
+      </section>
       <ol id="list" aria-label="Pharmacies by distance"></ol>
+      <p class="directory-link"><a id="directory" href="https://www.apteekki.fi/apteekkihaku" rel="noreferrer">Check Finnish pharmacy details at Apteekki.fi</a></p>
     </section>
   </main>
   <footer class="shell"><div class="footer-mark" aria-hidden="true">+</div><p id="disclaimer">Distances are not walking routes. Check pharmacy opening hours before travelling. Map data can be incomplete.</p><a href="https://www.openstreetmap.org/copyright" rel="noreferrer">© OpenStreetMap contributors</a></footer>

@@ -42,7 +42,12 @@ The 2026 refresh draws on Finnish functionalism: paper and pine tones, an editor
 
 Run browser tests after installing the pinned test-only dependency:
 ```sh
-npm install --no-save --package-lock=false @playwright/test@1.56.1
+npm install --no-save --package-lock=false @playwright/test@1.56.1 axe-core@4.10.3
 npx playwright install chromium
 npx playwright test --config e2e/playwright.config.js
 ```
+
+## Map and hours
+Select Map preview to load an interactive OpenStreetMap view for that pharmacy. The list works without it. Community-sourced schedules are explicitly unverified; use the linked Apteekki.fi directory to confirm. See the CI artifact `web-ui-evidence` for generated desktop/mobile screenshots using synthetic test data. Vercel uses `node scripts/build.mjs` to publish only static application files.
+
+Automated axe checks target serious/critical WCAG A/AA issues on the idle and results screens; a manual conformance review remains necessary.
