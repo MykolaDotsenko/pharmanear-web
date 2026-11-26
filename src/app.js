@@ -6,6 +6,7 @@ import { finnishToday } from './holidays.js';
 import { element, pharmacyRow } from './pharmacy-row.js';
 import { createRowRadar } from './row-radar.js';
 import { setUpSeason } from './festive.js';
+import { setUpSleigh } from './sleigh.js';
 import { setUpTheme } from './theme.js';
 import { setUpEffects, transition } from './effects.js';
 
@@ -40,8 +41,6 @@ const radar = createRowRadar({
       pharmacies: state.result.results,
       language: lang,
       text: tr('radarView'),
-      unnamed: tr('unnamed'),
-      mapLabel: tr('map'),
       reducedMotion,
       loading: tr('radarLoading'),
       failed: tr('radarError'),
@@ -309,6 +308,7 @@ if (root.dataset.season === 'christmas') {
     art: document.querySelector('.landscape'),
     reducedMotion,
   });
+  setUpSleigh({ list: $('list'), reducedMotion });
 }
 setUpEffects({ list: $('list'), hero: document.querySelector('.hero'), reducedMotion });
 render();

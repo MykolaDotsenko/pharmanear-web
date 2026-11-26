@@ -156,6 +156,63 @@
   filter: drop-shadow(0 0 3px #ffd25e) drop-shadow(0 0 8px #ffb52e);
 }
 
+/* Santa's sleigh (sleigh.js): flies from a pharmacy's name to the action pressed, in a fixed layer that never
+   takes a click or widens the page. */
+.sleigh-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 31;
+  overflow: hidden;
+  pointer-events: none;
+}
+.sleigh {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: clamp(150px, 20vw, 230px);
+  opacity: 0;
+  transform-origin: 50% 50%;
+  filter: drop-shadow(0 0 7px rgb(255 214 140 / 0.55)) drop-shadow(0 4px 5px rgb(40 20 10 / 0.22));
+  will-change: transform, opacity;
+}
+.sleigh svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+/* The reindeer gallop through the air: near and far legs swing out of step. */
+.sleigh-leg {
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+  animation: gallop 0.36s ease-in-out infinite alternate;
+}
+.sleigh-leg.front-far,
+.sleigh-leg.back-near {
+  animation-delay: -0.18s;
+}
+.sleigh-dust {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--size, 3px);
+  height: var(--size, 3px);
+  border-radius: 50%;
+  background: radial-gradient(circle, #fffbe6 0 30%, #f6c453 60%, rgb(246 196 83 / 0) 72%);
+  box-shadow: 0 0 6px 1px rgb(255 210 120 / 0.75);
+}
+.sleigh-burst {
+  background: radial-gradient(circle, #ffffff 0 30%, #ffd86b 62%, rgb(255 216 107 / 0) 74%);
+}
+@keyframes gallop {
+  from {
+    transform: rotate(-30deg);
+  }
+  to {
+    transform: rotate(28deg);
+  }
+}
+
 /* Winter details inside the artwork. */
 .winter-pines {
   stroke: var(--pine);

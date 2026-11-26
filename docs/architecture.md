@@ -18,6 +18,7 @@ app.js ─┬─► search-controller.js ─► core.js
         ├─► theme.js           (theme toggle and reveal)
         ├─► effects.js         (pointer depth, results transition)
         ├─► festive.js         (lights, snowflakes, snow, melody)
+        ├─► sleigh.js          (Santa's sleigh over a result)
         └─► strings.js
 
 theme-init.js                  (classic script in <head>, before the first paint)
@@ -67,7 +68,11 @@ network.
 - **`festive.js`** builds the string of lights and drives the snowflakes, the snow canvas and the Web Audio
   melody. Each bulb gets its own rhythm and a few flicker; the lights button stops them (WCAG 2.2.2) and
   reduced motion leaves them steadily lit. Snowflakes fly from a mouse pointer over the artwork (a touch makes
-  a small burst) in a fixed layer that cannot widen the page, each living under two and a half seconds. Snow
+  a small burst) in a fixed layer that cannot widen the page, each living under two and a half seconds.
+  **`sleigh.js`** sends Santa's sleigh with two reindeer, drawn in SVG, from above a pharmacy's name to the
+  Map preview, Radar or OpenStreetMap action pressed, trailing gold dust, and lets it vanish there in a small
+  burst; it follows both every frame, so a panel opening or a scroll does not lose it, never covers either
+  while it flies, lasts under two seconds, takes no clicks and never runs with reduced motion. Snow
   and the melody start only from their toggle buttons (`aria-pressed`), and snow is drawn once and kept still
   under reduced motion and pauses in hidden tabs. The melody is an arrangement of the public-domain chorus synthesized live: a
   celesta of slightly stretched partials with a hammer tick, an alternating bass and off-beat chords on the
@@ -81,10 +86,14 @@ network.
 
 ## Pharmacy radar
 
-Each result card has a **Radar** button; the radar opens inside that card, pointing to its pharmacy, and moves with the card when rows are re-rendered. Only one radar or map is open at a time. The radar is loaded on first use. `radar-view.js` first explains what it uses and asks for nothing; the
-**Start radar** click requests compass access (Safari shows that prompt only inside a click) and starts
-`radar-session.js`, which owns a high-accuracy location watch, the orientation listeners and a screen wake
-lock.
+Each result card has a **Radar** button. One press opens the radar inside that card and starts it: the click
+asks for compass access (Safari shows that prompt only inside a click, so `row-radar.js` asks before the view
+loads), and `radar-view.js` starts `radar-session.js`, which owns a high-accuracy location watch, the
+orientation listeners and a screen wake lock. Nothing is asked before that press. The radar shows only the
+card's pharmacy: the distance and the way to turn come first, large, then the dial, which is drawn at once
+while the first fix is awaited, and the panel scrolls itself into view, so nothing needs a second press or a
+scroll. Wide enough, the words sit beside the dial. It moves with the card when rows are re-rendered; only
+one radar or map is open at a time, and the view is loaded on first use.
 
 - **Lifetime.** Closing the radar, a new search, a language change or leaving the page releases all of it.
   While the page is hidden the watch is cleared and the wake lock released; a denied location ends the session
@@ -97,7 +106,7 @@ lock.
   fix, otherwise two fixes far enough apart; otherwise the chart is north-up and directions are cardinal.
   With reduced motion the chart always stays north-up, and the words still say where to turn.
 - **Cost.** Compass events can arrive sixty times a second; the view redraws at most once per animation
-  frame, and the pharmacy chooser keeps the search order so live updates never rebuild an open picker.
+  frame.
 - **Accessibility.** The chart is hidden from assistive technology; a status line and a throttled live
   region carry the same information. Forced colours draw the target in `Highlight`.
 - **Permissions.** `vercel.json` names `accelerometer`, `gyroscope` and `magnetometer` for this origin only,

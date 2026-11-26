@@ -168,3 +168,26 @@ test('nothing opens when there are no results to show', async () => {
   assert.equal(loads, 0);
   assert.equal(dom.hostIn('a'), undefined);
 });
+
+test('one press asks for the compass inside the click and starts the view with the answer', async () => {
+  const dom = fakeList(['a']);
+  const asked = [];
+  const opened = [];
+  const radar = createRowRadar({
+    list: dom.list,
+    options: () => ({ loading: 'Loading', failed: 'Failed' }),
+    compass: () => {
+      asked.push('compass');
+      return Promise.resolve(true);
+    },
+    load: async () => ({ openRadar: settings => (opened.push(settings), { close() {} }) }),
+  });
+  const pending = radar.toggle({ id: 'a' });
+  // Synchronously, before the view has loaded: Safari shows its prompt only during the gesture.
+  assert.deepEqual(asked, ['compass']);
+  await pending;
+  assert.equal(await opened[0].compass, true);
+  // Closing asks for nothing.
+  await radar.toggle({ id: 'a' });
+  assert.deepEqual(asked, ['compass']);
+});

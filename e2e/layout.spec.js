@@ -41,7 +41,7 @@ const states = {
   async radar(page) {
     await states.results(page);
     await page.locator('[data-radar-id="node/2"]').click();
-    await page.locator('.radar-start').click();
+    await expect(page.locator('.radar-panel')).toBeVisible();
     await page.evaluate(() => window.radarFix());
     await expect(page.locator('.radar-chart')).toBeVisible();
   },

@@ -11,10 +11,6 @@ export const messages = {
     radarView: {
       title: 'Pharmacy radar',
       close: 'Close radar',
-      start: 'Start radar',
-      intro:
-        'The radar points to the pharmacy in a straight line, using your live location and, if you allow it, the compass. Your browser asks for permission when you start it. Nothing is sent or stored, it stops when you close it or leave the page, and the screen stays on while it shows your position.',
-      target: 'Choose pharmacy',
       locating: 'Finding your live location…',
       stale: 'Waiting for a new GPS fix…',
       paused: 'Radar paused',
@@ -84,11 +80,11 @@ export const messages = {
     distanceNote: 'Distances are straight-line estimates, not walking routes.',
     nearest: 'Closest mapped result',
     unnamed: 'Pharmacy — name unavailable',
-    hours: 'Mapped hours (unverified)',
+    hours: 'Opening hours (OpenStreetMap)',
     hoursChecked: 'Opening hours',
     missingAddress: 'Address not listed',
     hoursDisclosure:
-      'Opening hours come from OpenStreetMap and are unverified unless a checked source is shown. Confirm before travelling.',
+      'Opening hours come from OpenStreetMap and can be out of date. Confirm them with the pharmacy before you go.',
     sourceChecked: 'Source checked',
     sourceLink: 'Pharmacy details',
     checkHours: 'Check opening hours',
@@ -124,10 +120,6 @@ export const messages = {
     radarView: {
       title: 'Apteekkitutka',
       close: 'Sulje tutka',
-      start: 'Käynnistä tutka',
-      intro:
-        'Tutka osoittaa apteekin suunnan linnuntietä reaaliaikaisen sijaintisi ja luvallasi kompassin avulla. Selain kysyy lupaa, kun käynnistät tutkan. Mitään ei lähetetä eikä tallenneta, tutka pysähtyy, kun suljet sen tai poistut sivulta, ja näyttö pysyy päällä, kun tutka näyttää sijaintisi.',
-      target: 'Valitse apteekki',
       locating: 'Haetaan sijaintia…',
       stale: 'Odotetaan uutta GPS-sijaintia…',
       paused: 'Tutka tauolla',
@@ -197,11 +189,11 @@ export const messages = {
     distanceNote: 'Etäisyydet ovat linnuntiearvioita, eivät kävelyreittejä.',
     nearest: 'Lähin karttatulos',
     unnamed: 'Apteekki — nimi puuttuu',
-    hours: 'Karttaan merkityt aukioloajat (vahvistamatta)',
+    hours: 'Aukioloajat (OpenStreetMap)',
     hoursChecked: 'Aukioloajat',
     missingAddress: 'Osoitetta ei ilmoitettu',
     hoursDisclosure:
-      'Aukioloajat ovat OpenStreetMapista eikä niitä ole vahvistettu, ellei tarkistettua lähdettä ole merkitty. Tarkista ne ennen lähtöä.',
+      'Aukioloajat tulevat OpenStreetMapista ja voivat olla vanhentuneita. Varmista ne apteekista ennen lähtöä.',
     sourceChecked: 'Lähde tarkistettu',
     sourceLink: 'Apteekin tiedot',
     checkHours: 'Tarkista aukioloajat',
@@ -237,10 +229,6 @@ export const messages = {
     radarView: {
       title: 'Apoteksradar',
       close: 'Stäng radarn',
-      start: 'Starta radarn',
-      intro:
-        'Radarn visar riktningen till apoteket fågelvägen med din aktuella position och, om du tillåter det, kompassen. Webbläsaren frågar om lov när du startar den. Inget skickas eller sparas, radarn stannar när du stänger den eller lämnar sidan, och skärmen förblir tänd medan den visar din position.',
-      target: 'Välj apotek',
       locating: 'Hämtar din position…',
       stale: 'Väntar på en ny GPS-position…',
       paused: 'Radarn pausad',
@@ -310,11 +298,11 @@ export const messages = {
     distanceNote: 'Avstånden är uppskattade fågelvägsavstånd, inte gångvägar.',
     nearest: 'Närmaste kartresultat',
     unnamed: 'Apotek — namn saknas',
-    hours: 'Kartlagda öppettider (ej bekräftade)',
+    hours: 'Öppettider (OpenStreetMap)',
     hoursChecked: 'Öppettider',
     missingAddress: 'Adress saknas',
     hoursDisclosure:
-      'Öppettiderna kommer från OpenStreetMap och är inte bekräftade om ingen kontrollerad källa anges. Kontrollera dem före avfärd.',
+      'Öppettiderna kommer från OpenStreetMap och kan vara inaktuella. Kontrollera dem med apoteket innan du går.',
     sourceChecked: 'Källa kontrollerad',
     sourceLink: 'Apoteksuppgifter',
     checkHours: 'Kontrollera öppettider',

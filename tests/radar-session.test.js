@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createRadarSession, requestCompass } from '../src/radar-session.js';
+import { createRadarSession } from '../src/radar-session.js';
+import { requestCompass } from '../src/row-radar.js';
 
 /** An event target that counts its listeners. */
 function target(extra = {}) {

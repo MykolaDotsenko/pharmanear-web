@@ -116,7 +116,7 @@ test('map requires explicit action and closes with restored focus', async ({ pag
   await expect(page.locator('#map-panel')).toBeHidden();
   await expect(button).toBeFocused();
 });
-test('missing or unverified hours never become an open-now claim', async ({ page }) => {
+test('mapped or missing hours never become an open-now claim', async ({ page }) => {
   await page.route(endpoint, r =>
     fulfill(r, {
       elements: [
@@ -127,10 +127,10 @@ test('missing or unverified hours never become an open-now claim', async ({ page
   );
   await page.goto('/');
   await page.locator('#search-label').click();
-  // Every row says its mapped hours are unverified; the shared notice says where they come from.
-  await expect(page.locator('#list li').first()).toContainText('Mapped hours (unverified)');
+  // Every row names where its hours come from; the shared notice says they can be out of date.
+  await expect(page.locator('#list li').first()).toContainText('Opening hours (OpenStreetMap)');
   await expect(page.locator('#list li').last()).toContainText('Opening hours unavailable');
-  await expect(page.locator('#hours-disclosure')).toContainText('unverified');
+  await expect(page.locator('#hours-disclosure')).toContainText('can be out of date');
   await expect(page.getByRole('link', { name: 'Check opening hours: Far pharmacy' })).toBeVisible();
 });
 test('capture desktop and mobile screenshots with synthetic results', async ({ page }, testInfo) => {
@@ -573,7 +573,7 @@ test.describe("today's opening hours", () => {
       await page.goto('/');
       await page.locator('#search-label').click();
       await expect(page.locator('.hours-rule.today')).toHaveText(marked);
-      await expect(page.locator('#list li').first()).toContainText('Mapped hours (unverified)');
+      await expect(page.locator('#list li').first()).toContainText('Opening hours (OpenStreetMap)');
     });
   }
 
@@ -635,7 +635,7 @@ test('the results read as a structured list to assistive technology', async ({ p
           - paragraph: Closest mapped result
           - heading "Near pharmacy" [level=3]
           - paragraph: Example street
-          - paragraph: Mapped hours (unverified) Mon–Fri 09:00–18:00 today · Sat 10:00–14:00 · Public holidays closed
+          - paragraph: Opening hours (OpenStreetMap) Mon–Fri 09:00–18:00 today · Sat 10:00–14:00 · Public holidays closed
           - text: 31 m
           - 'button "Map preview: Near pharmacy"'
           - 'button "Radar: Near pharmacy"'
