@@ -8,7 +8,9 @@ test('real Finnish catalog works for every city with Overpass unavailable', asyn
     await page.locator('#city').selectOption(city);
     await page.getByRole('button', { name: 'Search', exact: true }).click();
     await expect(page.locator('.results')).toHaveAttribute('data-state', 'found');
-    await expect(page.locator('#status')).toContainText('OSM catalog date:');
+    await page.locator('#result-details summary').click();
+    await expect(page.locator('#source-note')).toContainText('OSM catalog date:');
+    await page.locator('#result-details summary').click();
     const row = page.locator('#list li').first();
     await expect(row).toBeVisible();
     await expect(row.locator('h3')).not.toBeEmpty();
