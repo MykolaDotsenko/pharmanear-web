@@ -18,7 +18,8 @@ function startLocation(){lastAction=startLocation;const job=begin('locating');if
 function renderUX(){
  const copy=ux[lang];for(const [id,key] of Object.entries({'privacy-summary':'privacySummary',retry:'retry','fallback-directory':'fallback','distance-note':'distanceNote','change-location':'changeLocation'}))$(id).textContent=copy[key];
  const failed=['error','denied','empty'].includes(status),found=status==='found';
- $('recovery').hidden=!failed;$('retry').hidden=!lastAction||status==='denied'||status==='empty';
+ $('recovery').hidden=!failed;
+ $('directory').parentElement.hidden=failed;$('retry').hidden=!lastAction||status==='denied'||status==='empty';
  $('distance-note').hidden=!found;$('result-tools').hidden=!found;
  $('show-all').hidden=!found||data.results.length<=initialLimit;
  $('show-all').textContent=expanded?copy.showLess:copy.showAll;
