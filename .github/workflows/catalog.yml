@@ -3,6 +3,11 @@ on:
   schedule:
     - cron: '23 3 * * 1'
   workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish validated data from main'
+        type: boolean
+        default: false
   pull_request:
     paths:
       - 'scripts/build-catalog.py'
@@ -40,7 +45,7 @@ jobs:
           print("CATALOG_END " + str(len(data["elements"])))
           PY
       - name: Validate freshness against existing snapshot
-        if: github.event_name == 'schedule'
+        if: github.event_name != 'pull_request'
         run: |
           git show HEAD:data/finland-pharmacies.json > /tmp/previous.json
           python3 - <<'PY'
@@ -52,7 +57,7 @@ jobs:
           assert dt.datetime.now(dt.timezone.utc)-dt.datetime.fromisoformat(new['sourceDate'].replace('Z','+00:00')) < dt.timedelta(days=7)
           PY
   publish:
-    if: github.event_name == 'schedule' && github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.publish))
     needs: catalog
     runs-on: ubuntu-24.04
     permissions:
@@ -63,6 +68,19 @@ jobs:
         with:
           name: finland-pharmacy-catalog
           path: data
+      - name: Verify freshness again before publishing
+        run: |
+          git fetch origin main
+          git show origin/main:data/finland-pharmacies.json > /tmp/current.json
+          python3 - <<'PY'
+          import json, datetime as dt
+          old=json.load(open('/tmp/current.json'))
+          new=json.load(open('data/finland-pharmacies.json'))
+          date=lambda v: dt.datetime.fromisoformat(v.replace('Z','+00:00'))
+          assert date(new['sourceDate']) >= date(old['sourceDate'])
+          assert -dt.timedelta(days=1) <= dt.datetime.now(dt.timezone.utc)-date(new['sourceDate']) < dt.timedelta(days=7)
+          assert len(new['elements']) >= len(old['elements'])*0.8
+          PY
       - run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
