@@ -77,6 +77,7 @@ function renderControls() {
   });
 
   document.body.dataset.searchState = status;
+  document.body.toggleAttribute('data-outcome', found || failed);
   document.querySelector('.results').dataset.state = status;
   $('loading-art').hidden = !busy;
   $('cancel').hidden = !busy;

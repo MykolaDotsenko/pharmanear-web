@@ -628,53 +628,33 @@ footer p {
   color: var(--muted);
   margin: 0.45rem 0;
 }
-body[data-search-state='found'] .hero,
-body[data-search-state='error'] .hero,
-body[data-search-state='empty'] .hero,
-body[data-search-state='denied'] .hero {
+/* Once a search has an outcome, the hero yields its space to the results. */
+body[data-outcome] .hero {
   padding: 1.7rem 0 1.5rem;
   grid-template-columns: 1fr;
 }
-body[data-search-state='found'] .landscape,
-body[data-search-state='error'] .landscape,
-body[data-search-state='empty'] .landscape,
-body[data-search-state='denied'] .landscape {
+body[data-outcome] .landscape {
   display: none;
 }
-body[data-search-state='found'] h1,
-body[data-search-state='error'] h1,
-body[data-search-state='empty'] h1,
-body[data-search-state='denied'] h1 {
+body[data-outcome] h1 {
   font-size: clamp(1.8rem, 3vw, 2.6rem);
   max-width: none;
 }
-body[data-search-state='found'] .intro,
-body[data-search-state='error'] .intro,
-body[data-search-state='empty'] .intro,
-body[data-search-state='denied'] .intro {
+body[data-outcome] .intro {
   display: none;
 }
 @media (min-width: 761px) {
-  body[data-search-state='found'] .hero-copy,
-  body[data-search-state='error'] .hero-copy,
-  body[data-search-state='empty'] .hero-copy,
-  body[data-search-state='denied'] .hero-copy {
+  body[data-outcome] .hero-copy {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 0.5rem 2rem;
     align-items: end;
   }
-  body[data-search-state='found'] .hero-copy h1,
-  body[data-search-state='error'] .hero-copy h1,
-  body[data-search-state='empty'] .hero-copy h1,
-  body[data-search-state='denied'] .hero-copy h1,
+  body[data-outcome] .hero-copy h1,
   .hero-copy .eyebrow {
     grid-column: 1/-1;
   }
-  body[data-search-state='found'] .hero-copy form,
-  body[data-search-state='error'] .hero-copy form,
-  body[data-search-state='empty'] .hero-copy form,
-  body[data-search-state='denied'] .hero-copy form {
+  body[data-outcome] .hero-copy form {
     grid-column: 2;
     grid-row: 3/5;
     align-self: start;
