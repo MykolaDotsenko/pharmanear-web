@@ -18,6 +18,7 @@ app.js ─┬─► search-controller.js ─► core.js
         ├─► theme.js           (theme toggle and reveal)
         ├─► effects.js         (pointer depth, results transition)
         ├─► festive.js         (lights, snowflakes, snow, melody)
+        ├─► sleigh.js          (Santa's sleigh over a result)
         └─► strings.js
 
 theme-init.js                  (classic script in <head>, before the first paint)
@@ -67,7 +68,11 @@ network.
 - **`festive.js`** builds the string of lights and drives the snowflakes, the snow canvas and the Web Audio
   melody. Each bulb gets its own rhythm and a few flicker; the lights button stops them (WCAG 2.2.2) and
   reduced motion leaves them steadily lit. Snowflakes fly from a mouse pointer over the artwork (a touch makes
-  a small burst) in a fixed layer that cannot widen the page, each living under two and a half seconds. Snow
+  a small burst) in a fixed layer that cannot widen the page, each living under two and a half seconds.
+  **`sleigh.js`** sends Santa's sleigh with two reindeer, drawn in SVG, from above a pharmacy's name to the
+  Map preview, Radar or OpenStreetMap action pressed, trailing gold dust, and lets it vanish there in a small
+  burst; it follows both every frame, so a panel opening or a scroll does not lose it, never covers either
+  while it flies, lasts under two seconds, takes no clicks and never runs with reduced motion. Snow
   and the melody start only from their toggle buttons (`aria-pressed`), and snow is drawn once and kept still
   under reduced motion and pauses in hidden tabs. The melody is an arrangement of the public-domain chorus synthesized live: a
   celesta of slightly stretched partials with a hammer tick, an alternating bass and off-beat chords on the

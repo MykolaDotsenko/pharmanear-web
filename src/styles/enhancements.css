@@ -139,6 +139,7 @@ body::before {
   }
   body::before,
   .flake-layer,
+  .sleigh-layer,
   .hero::before,
   .pharmacy::before,
   .pharmacy.closest::after,

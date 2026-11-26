@@ -31,7 +31,8 @@ affiliated with Treat Health and not medical advice.
   disclosures, and view transitions for the theme change and the first results. Each is progressive
   enhancement; reduced motion turns all of it off and forced colours keep every state visible.
 - From 25 November to 6 January: a Christmas palette, a string of lights that twinkle on their own rhythms
-  (with a button to switch them off), snowflakes that fly from the pointer over the artwork, and optional
+  (with a button to switch them off), snowflakes that fly from the pointer over the artwork, Santa's sleigh
+  flying from a pharmacy's name to the action you press, and optional
   snowfall and a short
   _Jingle Bells_ (public domain), arranged for celesta, bass and chords with sleigh bells and a room reverb,
   synthesized live with the Web Audio API. Neither starts on its own, snow stays still with reduced motion,
@@ -95,6 +96,7 @@ Formatting is checked in CI: `npm run format:check`, or `npm run format` to fix.
 | `src/theme.js`                | Theme toggle, its memory and the circular reveal                         |
 | `src/effects.js`              | Decorative pointer depth and the results view transition                 |
 | `src/festive.js`              | Seasonal lights, snowflakes, snowfall and melody, and their toggles      |
+| `src/sleigh.js`               | Santa's sleigh flying from a pharmacy's name to the pressed action       |
 | `src/radar-*.js`              | Pharmacy radar: geometry, sensor session and view                        |
 | `src/pharmacy-details.js`     | Checked sources for a few pharmacies, and possible duplicate entries     |
 | `src/theme-init.js`           | Sets the theme and season before the first paint                         |
