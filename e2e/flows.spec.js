@@ -304,13 +304,14 @@ test('Christmas palette uses accessible festive actions in light and dark mode',
   await page.clock.setFixedTime(new Date('2026-12-20T12:00:00Z'));
   await page.emulateMedia({ colorScheme: 'light', reducedMotion: 'reduce' });
   await page.goto('/');
-  const background = () => page.locator('#locate').evaluate(el => getComputedStyle(el).backgroundColor);
-  expect(await background()).toBe('rgb(139, 38, 59)');
+  const locate = page.locator('#locate');
+  await expect(locate).toHaveCSS('background-color', 'rgb(139, 38, 59)');
+  // The system theme changes asynchronously; toHaveCSS waits for it.
   await page.emulateMedia({ colorScheme: 'dark' });
-  expect(await background()).toBe('rgb(174, 62, 84)');
+  await expect(locate).toHaveCSS('background-color', 'rgb(174, 62, 84)');
   await page.clock.setFixedTime(new Date('2027-01-07T12:00:00Z'));
   await page.reload();
-  expect(await background()).not.toBe('rgb(174, 62, 84)');
+  await expect(locate).not.toHaveCSS('background-color', 'rgb(174, 62, 84)');
 });
 
 test('independent provider recovers from a primary outage', async ({ page }) => {
