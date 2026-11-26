@@ -13,3 +13,18 @@ test('query radius allowlist and map link',()=>{assert.throws(()=>query(origin,1
 test('hours are bounded and invalid elements ignored',()=>{const r=normalize({elements:[null,undefined,{...pharmacy(1,60.45,22.27),tags:{amenity:'pharmacy',opening_hours:' Mo-Fr 09:00-18:00 '}}]},origin);assert.equal(r.length,1);assert.equal(r[0].hours,'Mo-Fr 09:00-18:00');});
 test('aborted response cannot produce results',async()=>{const c=new AbortController();await assert.rejects(search(origin,async()=>{c.abort();return {elements:[pharmacy(1,60.45,22.27)]};},c.signal),{name:'AbortError'});});
 test('map embeds only selected pharmacy coordinates',async()=>{const {embedUrl}=await import('../src/core.js');const u=new URL(embedUrl({lat:60.452,lon:22.267}));assert.equal(u.origin,'https://www.openstreetmap.org');assert.equal(u.searchParams.get('marker'),'60.452,22.267');assert.throws(()=>embedUrl({lat:100,lon:0}));});
+
+test('equal distances use a stable ID order independent of input order',()=>{
+  const rows=[pharmacy(2,origin.lat,origin.lon),pharmacy(1,origin.lat,origin.lon)];
+  assert.deepEqual(normalize({elements:rows},origin).map(row=>row.id),['node/1','node/2']);
+});
+test('invalid coordinates never generate map URLs or normalized results',()=>{
+  const invalid={lat:91,lon:0};
+  assert.throws(()=>mapsUrl(invalid),RangeError);
+  assert.throws(()=>normalize({elements:[]},invalid),RangeError);
+});
+test('invalid provider items do not corrupt valid results',()=>{
+  const good=pharmacy(7,origin.lat,origin.lon);
+  const payload={elements:[null,false,{type:'node',id:8,lat:0,lon:0,tags:[]},good]};
+  assert.equal(normalize(payload,origin).length,1);
+});
