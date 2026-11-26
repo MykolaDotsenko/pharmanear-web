@@ -22,3 +22,8 @@ Web browser tests now exist with mocked network responses; execution is tracked 
 
 ## Release gate
 Review source, run unit and mocked browser tests, review generated screenshots, then verify real Overpass and map availability, keyboard/screen-reader usability and pharmacy hours. Do not claim WCAG conformance or verified schedules from these checks alone.
+
+## UX review — three source passes
+1. Journey: reduce post-search visual competition; progressive result disclosure; retry and independent directory on provider errors.
+2. Hierarchy: concise mobile header, preserve Finnish contour identity only before results, distance caveat beside results.
+3. Accessibility: explicit expanded state, keyboard focus on change location/cancel, native details disclosure. Added deterministic tests. Live provider remains a separate gate.

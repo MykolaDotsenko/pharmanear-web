@@ -71,3 +71,20 @@ test.describe('automated accessibility checks',()=>{
   expect(await audit()).toEqual([]);
  });
 });
+
+test('task-first results progressively disclose more pharmacies',async({page})=>{
+ const rows=Array.from({length:8},(_,i)=>({type:'node',id:i+1,lat:60.4518+i*.0001,lon:22.2666,tags:{amenity:'pharmacy',name:'Pharmacy '+(i+1)}}));
+ await page.route(endpoint,r=>fulfill(r,{elements:rows}));await page.goto('/');
+ await page.locator('#search-label').click();await expect(page.locator('#list li')).toHaveCount(5);
+ await expect(page.locator('.landscape')).toBeHidden();await expect(page.locator('#distance-note')).toBeVisible();
+ await page.getByRole('button',{name:'Show more pharmacies'}).click();await expect(page.locator('#list li')).toHaveCount(8);
+ await page.getByRole('button',{name:'Show fewer pharmacies'}).click();await expect(page.locator('#list li')).toHaveCount(5);
+ await page.getByRole('link',{name:'Change location'}).click();await expect(page.locator('#locate')).toBeFocused();
+});
+test('recovery offers retry and independent directory',async({page})=>{
+ let fail=true;await page.route(endpoint,r=>fail?r.fulfill({status:503,headers:{'access-control-allow-origin':'*'}}):fulfill(r,fixture));
+ await page.goto('/');await page.locator('#search-label').click();
+ await expect(page.getByRole('link',{name:'Find a pharmacy on Apteekki.fi'})).toBeVisible();
+ fail=false;await page.getByRole('button',{name:'Try again'}).click();await expect(page.locator('#list li')).toHaveCount(2);
+ await expect(page.locator('#recovery')).toBeHidden();
+});
