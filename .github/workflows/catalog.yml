@@ -1,0 +1,39 @@
+name: Acquire Finland pharmacy catalog
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'scripts/build-catalog.py'
+      - '.github/workflows/catalog.yml'
+permissions:
+  contents: read
+jobs:
+  catalog:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y osmium-tool
+      - name: Download and filter Geofabrik data
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 2 --max-time 420 https://download.geofabrik.de/europe/finland-latest.osm.pbf -o /tmp/finland.osm.pbf
+          source_date="$(osmium fileinfo -g header.option.osmosis_replication_timestamp /tmp/finland.osm.pbf)"
+          test -n "$source_date"
+          osmium tags-filter /tmp/finland.osm.pbf nwr/amenity=pharmacy -o /tmp/pharmacies.osm.pbf
+          osmium export /tmp/pharmacies.osm.pbf -a type,id --geometry-types=point,polygon -o /tmp/pharmacies.geojson
+          python3 scripts/build-catalog.py /tmp/pharmacies.geojson data/finland-pharmacies.json "$source_date"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: finland-pharmacy-catalog
+          path: data/finland-pharmacies.json
+      - name: Export compact catalog for review
+        run: |
+          python3 - <<'PY'
+          import json, pathlib
+          data = json.loads(pathlib.Path("data/finland-pharmacies.json").read_text())
+          print("CATALOG_META " + json.dumps({k:v for k,v in data.items() if k != "elements"}, ensure_ascii=True))
+          for i, row in enumerate(data["elements"]):
+              print("CATALOG_ROW " + str(i) + " " + json.dumps(row, ensure_ascii=True, separators=(",", ":")))
+          print("CATALOG_END " + str(len(data["elements"])))
+          PY
