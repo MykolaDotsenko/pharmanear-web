@@ -1,19 +1,113 @@
-export const radii = [3000, 10000, 30000];
-export const cities = { Turku: {lat:60.4518,lon:22.2666}, Helsinki:{lat:60.1699,lon:24.9384}, Tampere:{lat:61.4978,lon:23.7610}, Oulu:{lat:65.0121,lon:25.4651}, Vaasa:{lat:63.0951,lon:21.6165} };
-export function validPoint(p){return p && Number.isFinite(p.lat) && Number.isFinite(p.lon) && Math.abs(p.lat)<=90 && Math.abs(p.lon)<=180;}
-export function approximate(p){if(!validPoint(p)) throw new Error('invalid point');return {lat:Math.round(p.lat*100)/100,lon:Math.round(p.lon*100)/100};}
-export function distance(a,b){const rad=x=>x*Math.PI/180;const dlat=rad(b.lat-a.lat),dlon=rad(b.lon-a.lon);const h=Math.sin(dlat/2)**2+Math.cos(rad(a.lat))*Math.cos(rad(b.lat))*Math.sin(dlon/2)**2;return 6371008.8*2*Math.asin(Math.sqrt(Math.max(0,Math.min(1,h))));}
-export function query(center,radius){if(!validPoint(center)||!radii.includes(radius))throw new Error('invalid query');return `[out:json][timeout:15];nwr["amenity"="pharmacy"](around:${radius},${center.lat},${center.lon});out center;`;}
-export function normalize(payload,origin){if(!payload||!Array.isArray(payload.elements)||payload.remark)throw new Error('incomplete response');const seen=new Set();return payload.elements.flatMap(e=>{if(!e || typeof e!=='object')return [];const p={lat:e.lat??e.center?.lat,lon:e.lon??e.center?.lon};if(!validPoint(p)||!['node','way','relation'].includes(e.type)||!Number.isSafeInteger(e.id)||e.tags?.amenity!=='pharmacy')return [];const id=`${e.type}/${e.id}`;if(seen.has(id))return [];seen.add(id);const t=e.tags??{};return [{id,...p,name:typeof t.name==='string'?t.name:'',address:[t['addr:street'],t['addr:housenumber'],t['addr:city']].filter(x=>typeof x==='string').join(' '),hours:typeof t.opening_hours==='string'?t.opening_hours.trim().slice(0,240):'',distance:distance(origin,p)}];}).sort((a,b)=>a.distance-b.distance||a.id.localeCompare(b.id));}
-export async function search(origin, fetcher, signal){const center=approximate(origin);const offset=distance(origin,center);let results=[];for(const radius of radii){signal?.throwIfAborted();const payload=await fetcher(query(center,radius),signal);signal?.throwIfAborted();results=normalize(payload,origin);if(results.length&&results[0].distance+offset<radius)return {results,radius,covered:true};}return {results,radius:radii.at(-1),covered:false};}
-export const mapsUrl=p=>`https://www.openstreetmap.org/?mlat=${encodeURIComponent(p.lat)}&mlon=${encodeURIComponent(p.lon)}#map=18/${encodeURIComponent(p.lat)}/${encodeURIComponent(p.lon)}`;
+// Pure geographic calculations and search rules. No DOM or network access.
+const EARTH_RADIUS_METERS = 6_371_008.8;
+export const radii = Object.freeze([3000, 10000, 30000]);
+export const cities = Object.freeze({
+  Turku: Object.freeze({ lat: 60.4518, lon: 22.2666 }),
+  Helsinki: Object.freeze({ lat: 60.1699, lon: 24.9384 }),
+  Tampere: Object.freeze({ lat: 61.4978, lon: 23.7610 }),
+  Oulu: Object.freeze({ lat: 65.0121, lon: 25.4651 }),
+  Vaasa: Object.freeze({ lat: 63.0951, lon: 21.6165 }),
+});
+
+export function validPoint(point) {
+  return Boolean(point && Number.isFinite(point.lat) && Number.isFinite(point.lon)
+    && Math.abs(point.lat) <= 90 && Math.abs(point.lon) <= 180);
+}
+
+export function approximate(point) {
+  if (!validPoint(point)) throw new RangeError('Invalid geographic point');
+  return { lat: Math.round(point.lat * 100) / 100, lon: Math.round(point.lon * 100) / 100 };
+}
+
+export function distance(from, to) {
+  const radians = degrees => degrees * Math.PI / 180;
+  const latitude = radians(to.lat - from.lat);
+  const longitude = radians(to.lon - from.lon);
+  const haversine = Math.sin(latitude / 2) ** 2
+    + Math.cos(radians(from.lat)) * Math.cos(radians(to.lat)) * Math.sin(longitude / 2) ** 2;
+  return 2 * EARTH_RADIUS_METERS * Math.asin(Math.sqrt(Math.max(0, Math.min(1, haversine))));
+}
+
+export function query(center, radius) {
+  if (!validPoint(center) || !radii.includes(radius)) throw new RangeError('Invalid search area');
+  return `[out:json][timeout:15];nwr["amenity"="pharmacy"](around:${radius},${center.lat},${center.lon});out center;`;
+}
+
+function pharmacyFromElement(element, origin) {
+  if (!element || typeof element !== 'object') return null;
+  const point = { lat: element.lat ?? element.center?.lat, lon: element.lon ?? element.center?.lon };
+  const tags = element.tags;
+  if (!validPoint(point) || !['node', 'way', 'relation'].includes(element.type)
+    || !Number.isSafeInteger(element.id) || tags?.amenity !== 'pharmacy') return null;
+
+  return {
+    id: `${element.type}/${element.id}`,
+    ...point,
+    name: typeof tags.name === 'string' ? tags.name : '',
+    address: [tags['addr:street'], tags['addr:housenumber'], tags['addr:city']]
+      .filter(value => typeof value === 'string').join(' '),
+    hours: typeof tags.opening_hours === 'string' ? tags.opening_hours.trim().slice(0, 240) : '',
+    distance: distance(origin, point),
+  };
+}
+
+function comparePharmacies(left, right) {
+  if (left.distance !== right.distance) return left.distance - right.distance;
+  return left.id < right.id ? -1 : left.id > right.id ? 1 : 0;
+}
+
+export function normalize(payload, origin) {
+  if (!validPoint(origin)) throw new RangeError('Invalid origin');
+  if (!Array.isArray(payload?.elements) || payload.remark) throw new Error('Incomplete provider response');
+  const unique = new Map();
+  for (const element of payload.elements) {
+    const pharmacy = pharmacyFromElement(element, origin);
+    if (pharmacy && !unique.has(pharmacy.id)) unique.set(pharmacy.id, pharmacy);
+  }
+  return [...unique.values()].sort(comparePharmacies);
+}
+
+/** A rounded search area proves nearest mapped coverage only strictly inside its boundary. */
+function coversNearest(results, radius, roundingOffset) {
+  return results.length > 0 && results[0].distance + roundingOffset < radius;
+}
+
+export async function search(origin, fetcher, signal) {
+  const center = approximate(origin);
+  const roundingOffset = distance(origin, center);
+  let results = [];
+  for (const radius of radii) {
+    signal?.throwIfAborted();
+    const payload = await fetcher(query(center, radius), signal);
+    signal?.throwIfAborted();
+    results = normalize(payload, origin);
+    if (coversNearest(results, radius, roundingOffset)) return { results, radius, covered: true };
+  }
+  return { results, radius: radii.at(-1), covered: false };
+}
+
+export function mapsUrl(point) {
+  if (!validPoint(point)) throw new RangeError('Invalid map point');
+  const url = new URL('https://www.openstreetmap.org/');
+  url.searchParams.set('mlat', String(point.lat));
+  url.searchParams.set('mlon', String(point.lon));
+  url.hash = `map=18/${point.lat}/${point.lon}`;
+  return url.href;
+}
 
 /** Only the selected pharmacy's coordinates are sent, not the search origin. */
-export function embedUrl(p){
-  if(!validPoint(p))throw new Error('invalid map point');
-  const lonDelta=Math.min(0.08,0.008/Math.max(0.1,Math.cos(p.lat*Math.PI/180)));
-  const box=[Math.max(-180,p.lon-lonDelta),Math.max(-85.05,Math.min(85.04,p.lat-0.008)),Math.min(180,p.lon+lonDelta),Math.max(-85.04,Math.min(85.05,p.lat+0.008))];
-  const u=new URL('https://www.openstreetmap.org/export/embed.html');
-  u.search=new URLSearchParams({bbox:box.join(','),layer:'mapnik',marker:[p.lat,p.lon].join(',')}).toString();
-  return u.href;
+export function embedUrl(point) {
+  if (!validPoint(point)) throw new RangeError('Invalid map point');
+  const lonDelta = Math.min(0.08, 0.008 / Math.max(0.1, Math.cos(point.lat * Math.PI / 180)));
+  const bounds = [
+    Math.max(-180, point.lon - lonDelta),
+    Math.max(-85.05, Math.min(85.04, point.lat - 0.008)),
+    Math.min(180, point.lon + lonDelta),
+    Math.max(-85.04, Math.min(85.05, point.lat + 0.008)),
+  ];
+  const url = new URL('https://www.openstreetmap.org/export/embed.html');
+  url.search = new URLSearchParams({
+    bbox: bounds.join(','), layer: 'mapnik', marker: [point.lat, point.lon].join(','),
+  }).toString();
+  return url.href;
 }
