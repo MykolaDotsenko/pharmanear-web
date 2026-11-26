@@ -1,5 +1,8 @@
 name: Web CI
-on: [push, pull_request]
+on: [push, pull_request, workflow_dispatch]
+concurrency:
+  group: web-ci-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
@@ -16,6 +19,7 @@ jobs:
       - run: npm install --no-save --package-lock=false @playwright/test@1.56.1 axe-core@4.10.3
       - run: npx playwright install --with-deps chromium
       - run: npx playwright test --config e2e/playwright.config.js
+      - run: npx playwright test --config e2e-live/playwright.config.js
       - run: npm run build
       - uses: actions/upload-artifact@v4
         if: always()
@@ -23,3 +27,46 @@ jobs:
           name: web-ui-evidence
           path: test-results/
           if-no-files-found: warn
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: production
+    permissions:
+      contents: read
+    env:
+      VERCEL_ORG_ID: team_AJmQMyR5j2vR39hERrsYbsvj
+      VERCEL_PROJECT_ID: prj_xvVdaUMuPJVmJ4hpURRMfB94S4vc
+      VERCEL_CLI_VERSION: '66.6.0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check deployment credentials
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          test -n "$VERCEL_TOKEN" || { echo "::error::Set VERCEL_TOKEN in the production environment secrets"; exit 1; }
+      - run: npm install --global "vercel@$VERCEL_CLI_VERSION"
+      - name: Pull project settings
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: vercel pull --yes --environment=production
+      - name: Build
+        run: vercel build --prod
+      - name: Deploy tested revision
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: vercel deploy --prebuilt --prod
+      - name: Check public catalog
+        run: |
+          curl --fail --retry 2 --max-time 25 https://pharmanear-web.vercel.app/data/finland-pharmacies.json -o /tmp/deployed.json
+          python3 - <<'PY'
+          import json
+          assert json.load(open('/tmp/deployed.json')) == json.load(open('data/finland-pharmacies.json'))
+          PY
