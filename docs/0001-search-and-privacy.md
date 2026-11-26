@@ -16,3 +16,6 @@ Simple architecture and no keys, but third-party availability and map accuracy a
 
 ## Optional map and hours
 The explicit map preview embeds OpenStreetMap with the selected pharmacy coordinates only; the map provider receives normal network metadata. The list remains available if the map fails. OSM opening_hours strings are community-maintained, displayed without an open-now inference and must be checked against the pharmacy or the Finnish Pharmacy Association directory.
+
+## Provider resilience
+The browser tries FOSSGIS Overpass first and Private.coffee once on a transient transport failure, selected 5xx responses or incomplete data. Both receive the same rounded query location only. 403/429 are not retried against another provider. No fabricated results and no background requests. Public endpoints are best-effort, not an SLA.
