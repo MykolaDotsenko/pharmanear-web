@@ -107,7 +107,9 @@ test('missing or unverified hours never become an open-now claim', async ({ page
   await expect(page.locator('#list li').first()).toContainText('Opening hours');
   await expect(page.locator('#list li').last()).toContainText('Opening hours unavailable');
   await expect(page.locator('#hours-disclosure')).toContainText('OpenStreetMap');
-  await expect(page.locator('#list li').last().getByRole('link', { name: 'Check opening hours' })).toBeVisible();
+  await expect(
+    page.locator('#list li').last().getByRole('link', { name: 'Check opening hours' }),
+  ).toBeVisible();
 });
 test('capture desktop and mobile screenshots with synthetic results', async ({ page }, testInfo) => {
   await page.route(endpoint, r => fulfill(r, fixture));
