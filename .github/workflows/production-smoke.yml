@@ -1,0 +1,33 @@
+name: Production pharmacy data smoke
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/production-smoke.yml'
+permissions:
+  contents: read
+jobs:
+  deployed-data:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - name: Check published snapshots
+        run: |
+          set -euo pipefail
+          curl --fail --location --max-time 25 https://pharmanear-web.vercel.app/data/finland-pharmacies.json -o /tmp/bundled.json
+          curl --fail --location --max-time 25 https://pharmanear-web.vercel.app/data/current-finland-pharmacies.json -o /tmp/current.json
+          python3 - <<'PY'
+          import datetime as dt, json, math
+          def verify(path):
+              data=json.load(open(path))
+              assert data['schema']==1 and data['region']=='FI' and data['license']=='ODbL-1.0'
+              rows=data['elements']
+              assert 300 <= len(rows) <= 3000
+              assert len({(r['type'],r['id']) for r in rows})==len(rows)
+              assert all(math.isfinite(r['lat']) and math.isfinite(r['lon']) and r['tags']['amenity']=='pharmacy' for r in rows)
+              date=dt.datetime.fromisoformat(data['sourceDate'].replace('Z','+00:00'))
+              assert -dt.timedelta(days=1) <= dt.datetime.now(dt.timezone.utc)-date <= dt.timedelta(days=30)
+              print(path, len(rows), data['sourceDate'])
+              return date
+          assert verify('/tmp/current.json') >= verify('/tmp/bundled.json')
+          PY
