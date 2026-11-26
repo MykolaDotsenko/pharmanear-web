@@ -577,7 +577,7 @@ test('on a phone the actions share one line and nothing widens the page', async 
   const row = page.locator('#list li').first();
   // Same row: the two boxes overlap vertically.
   const preview = await row.locator('.map-preview').boundingBox();
-  const link = await row.locator('a').boundingBox();
+  const link = await row.locator('.pharmacy-action a').boundingBox();
   expect(link.y).toBeLessThan(preview.y + preview.height);
   expect(preview.y).toBeLessThan(link.y + link.height);
   await expect(row.locator('.rank')).toBeHidden();
@@ -612,7 +612,9 @@ test('the results read as a structured list to assistive technology', async ({ p
           - 'link "Open in OpenStreetMap: Near pharmacy"'
         - listitem:
           - heading "Far pharmacy" [level=3]
+          - paragraph: Address not listed
           - paragraph: Opening hours unavailable
+          - link "Check opening hours"
           - text: 2.2 km
           - 'button "Map preview: Far pharmacy"'
           - 'link "Open in OpenStreetMap: Far pharmacy"'
