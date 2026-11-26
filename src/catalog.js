@@ -44,11 +44,13 @@ export async function lookupPharmacies(origin, signal, {
     try {
       let payload;
       try { payload = await load(); } catch { signal?.throwIfAborted(); }
-      if (!payload || now() - Date.parse(payload.sourceDate) > refreshAgeDays * dayMs) {
+      let validSnapshot = false;
+      try { searchCatalog(payload, origin, now()); validSnapshot = true; } catch { /* refresh invalid snapshots */ }
+      if (!validSnapshot || now() - Date.parse(payload.sourceDate) > refreshAgeDays * dayMs) {
         try {
           const latest = await refresh();
           searchCatalog(latest, origin, now());
-          if (!payload || Date.parse(latest.sourceDate) > Date.parse(payload.sourceDate)) payload = latest;
+          if (!validSnapshot || Date.parse(latest.sourceDate) > Date.parse(payload.sourceDate)) payload = latest;
         } catch { signal?.throwIfAborted(); }
       }
       signal?.throwIfAborted();
