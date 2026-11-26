@@ -2,15 +2,30 @@ import { mapsUrl, embedUrl } from './core.js';
 import { messages, preferredLanguage } from './strings.js';
 import { createSearchController } from './search-controller.js';
 import { lookupPharmacies } from './catalog.js';
+import { formatOpeningHours } from './hours.js';
+import { buildGarland, createMelody, createSnowfall } from './festive.js';
 
 const $ = id => document.getElementById(id);
+const root = document.documentElement;
 const initialLimit = 5;
 const maximumShown = 20;
+const themeKey = 'pharmanear.theme';
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+const systemDark = matchMedia('(prefers-color-scheme: dark)');
 
 let lang = preferredLanguage(navigator.languages);
 let expanded = false;
 let selected = null;
 const tr = key => messages[lang][key];
+
+// The map panel moves into the selected row, so it is kept by reference rather than looked up by id.
+const map = {
+  panel: $('map-panel'),
+  heading: $('map-heading'),
+  frame: $('map-frame'),
+  privacy: $('map-privacy'),
+  close: $('close-map'),
+};
 
 const controller = createSearchController({
   lookup: lookupPharmacies,
@@ -26,10 +41,9 @@ const controller = createSearchController({
     if (wasBusy && next.status === 'found' && matchMedia('(max-width: 760px)').matches) {
       // Keep keyboard focus with the control the user activated.
       if (!document.activeElement?.matches(':focus-visible')) {
-        const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
         $('results-heading').scrollIntoView({
           block: 'start',
-          behavior: reduceMotion ? 'instant' : 'smooth',
+          behavior: reducedMotion.matches ? 'instant' : 'smooth',
         });
       }
     }
@@ -41,13 +55,26 @@ function setText(labels) {
   for (const [id, key] of Object.entries(labels)) $(id).textContent = tr(key);
 }
 
+/** Icon buttons keep one name; aria-pressed says whether their feature is on. */
+function labelIconButtons() {
+  for (const [id, key] of [
+    ['theme-toggle', 'theme'],
+    ['snow-toggle', 'snow'],
+    ['melody-toggle', 'melody'],
+  ]) {
+    $(id).setAttribute('aria-label', tr(key));
+    $(id).title = tr(key);
+  }
+}
+
 function renderDocument() {
-  document.documentElement.lang = lang;
+  root.lang = lang;
   document.title = tr('title');
   document.querySelector('meta[name="description"]').content = tr('description');
   document.querySelector('.skip').textContent = tr('skip');
   $('language').value = lang;
   for (const option of $('city').options) option.textContent = tr('cities')[option.value];
+  labelIconButtons();
 }
 
 function renderControls() {
@@ -58,6 +85,7 @@ function renderControls() {
   setText({
     'language-label': 'language',
     eyebrow: 'eyebrow',
+    greeting: 'greeting',
     heading: 'heading',
     intro: 'intro',
     'locate-label': 'locate',
@@ -94,36 +122,41 @@ function renderControls() {
 }
 
 function renderMapLabels() {
-  $('close-map').textContent = tr('closeMap');
-  $('map-privacy').textContent = tr('mapPrivacy');
+  map.close.textContent = tr('closeMap');
+  map.privacy.textContent = tr('mapPrivacy');
   $('map-disclosure').textContent = tr('mapPrivacy');
   if (!selected) return;
 
   const title = `${tr('mapTitle')} ${selected.name || tr('unnamed')}`;
-  $('map-heading').textContent = title;
-  const frame = $('map-frame').querySelector('iframe');
+  map.heading.textContent = title;
+  const frame = map.frame.querySelector('iframe');
   if (frame) frame.title = title;
+}
+
+function previewButton(id) {
+  return [...document.querySelectorAll('[data-map-id]')].find(button => button.dataset.mapId === id);
 }
 
 function closeMap(restoreFocus = false) {
   const id = selected?.id;
   selected = null;
-  $('map-panel').hidden = true;
-  $('map-frame').replaceChildren();
-  if (restoreFocus && id) {
-    [...document.querySelectorAll('[data-map-id]')].find(button => button.dataset.mapId === id)?.focus();
-  }
+  map.panel.hidden = true;
+  map.frame.replaceChildren();
+  $('list').before(map.panel);
+  if (restoreFocus && id) previewButton(id)?.focus();
 }
 
+/** Opens the map inside the pharmacy's own row, so its context stays in view. */
 function openMap(pharmacy) {
   selected = pharmacy;
   const frame = document.createElement('iframe');
   frame.src = embedUrl(pharmacy);
   frame.referrerPolicy = 'no-referrer';
-  $('map-frame').replaceChildren(frame);
-  $('map-panel').hidden = false;
+  map.frame.replaceChildren(frame);
+  previewButton(pharmacy.id).closest('li').append(map.panel);
+  map.panel.hidden = false;
   renderMapLabels();
-  $('map-heading').focus();
+  map.heading.focus();
 }
 
 function element(tag, className, text) {
@@ -142,17 +175,27 @@ function distanceText(meters) {
   }).format(short ? meters : meters / 1000);
 }
 
+/** Localized rules when the mapped value is simple enough; otherwise the mapped rules as they are. */
 function hoursLine(pharmacy) {
   const hours = element('p', 'hours');
   if (!pharmacy.hours) {
     hours.textContent = tr('missingHours');
     return hours;
   }
-  const readable = pharmacy.hours
-    .split(';')
-    .map(part => part.trim())
-    .join(' · ');
-  hours.append(element('span', 'hours-label', tr('hours')), element('span', 'hours-value', readable));
+  const rules =
+    formatOpeningHours(pharmacy.hours, lang, tr('openingHours')) ??
+    pharmacy.hours
+      .split(';')
+      .map(part => part.trim())
+      .filter(Boolean);
+  // The separator stays with the rule before it, so a wrapped line never starts with "·".
+  const value = element('span', 'hours-value');
+  rules.forEach((rule, index) => {
+    const last = index === rules.length - 1;
+    value.append(element('span', 'hours-rule', last ? rule : `${rule} ·`));
+    if (!last) value.append(' ');
+  });
+  hours.append(element('span', 'hours-label', tr('hours')), value);
   return hours;
 }
 
@@ -182,8 +225,8 @@ function pharmacyRow(pharmacy, index) {
   link.setAttribute('aria-label', `${tr('map')}: ${name}`);
 
   const action = element('div', 'pharmacy-action');
-  action.append(element('span', 'distance', distanceText(pharmacy.distance)), preview, link);
-  row.append(rank, info, action);
+  action.append(preview, link);
+  row.append(rank, info, element('span', 'distance', distanceText(pharmacy.distance)), action);
   return row;
 }
 
@@ -208,10 +251,15 @@ function renderResults() {
       ? [`${tr('catalogDate')}: ${result.sourceDate.slice(0, 10)}`, tr('catalogScope')]
       : [result.covered ? '' : tr('limited')];
   if (result.results.length > maximumShown) notes.push(tr('shown'));
-  $('source-note').textContent = notes.filter(Boolean).join(' ');
+  $('source-notes').replaceChildren(...notes.filter(Boolean).map(note => element('p', '', note)));
 
   const visible = result.results.slice(0, expanded ? maximumShown : initialLimit);
   list.append(...visible.map(pharmacyRow));
+  if (selected) {
+    const button = previewButton(selected.id);
+    if (button) button.closest('li').append(map.panel);
+    else closeMap();
+  }
 }
 
 function render() {
@@ -221,10 +269,62 @@ function render() {
   renderResults();
 }
 
-function isChristmasSeason(date) {
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
-  return (month === 11 && day >= 25) || month === 12 || (month === 1 && day <= 6);
+// Theme: the system's unless the visitor chose one; theme-init.js applied it before the first paint.
+function storedTheme() {
+  try {
+    return localStorage.getItem(themeKey);
+  } catch {
+    return null;
+  }
+}
+
+function applyTheme(theme) {
+  root.dataset.theme = theme;
+  $('theme-toggle').setAttribute('aria-pressed', String(theme === 'dark'));
+  document.querySelector('meta[name="theme-color"]').content = getComputedStyle(root)
+    .getPropertyValue('--paper')
+    .trim();
+}
+
+$('theme-toggle').addEventListener('click', () => {
+  const theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
+  try {
+    localStorage.setItem(themeKey, theme);
+  } catch {
+    // Without storage the choice lasts until the page is closed.
+  }
+  applyTheme(theme);
+});
+systemDark.addEventListener('change', event => {
+  if (!storedTheme()) applyTheme(event.matches ? 'dark' : 'light');
+});
+
+// Season: lights, snow and a melody, each only on request and only from 25 November to 6 January.
+function setUpSeason() {
+  buildGarland($('garland'));
+  const snowButton = $('snow-toggle');
+  const melodyButton = $('melody-toggle');
+  const snow = createSnowfall($('snowfall'), { reducedMotion: reducedMotion.matches });
+  const melody = createMelody({ onEnd: () => melodyButton.setAttribute('aria-pressed', 'false') });
+
+  snowButton.addEventListener('click', () => {
+    if (snow.running) snow.stop();
+    else snow.start();
+    snowButton.setAttribute('aria-pressed', String(snow.running));
+  });
+  melodyButton.addEventListener('click', async () => {
+    if (melody.playing) {
+      melody.stop();
+      melodyButton.setAttribute('aria-pressed', 'false');
+      return;
+    }
+    melodyButton.setAttribute('aria-pressed', 'true');
+    try {
+      await melody.play();
+    } catch {
+      melodyButton.setAttribute('aria-pressed', 'false');
+    }
+  });
 }
 
 $('locate').addEventListener('click', () => controller.locate());
@@ -237,7 +337,7 @@ $('cancel').addEventListener('click', () => {
   controller.cancel();
   $('locate').focus();
 });
-$('close-map').addEventListener('click', () => closeMap(true));
+map.close.addEventListener('click', () => closeMap(true));
 $('show-all').addEventListener('click', () => {
   expanded = !expanded;
   closeMap();
@@ -253,5 +353,6 @@ $('language').addEventListener('change', event => {
   render();
 });
 
-if (isChristmasSeason(new Date())) document.body.dataset.season = 'christmas';
+if (root.dataset.season === 'christmas') setUpSeason();
+applyTheme(root.dataset.theme ?? (systemDark.matches ? 'dark' : 'light'));
 render();

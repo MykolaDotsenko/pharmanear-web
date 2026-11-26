@@ -29,7 +29,7 @@ test('idle is private, search orders results, accessible map link and locale', a
   expect(requests).toBe(0);
   await page.getByRole('button', { name: 'Search', exact: true }).click();
   await expect(page.locator('#list li').first()).toContainText('Near pharmacy');
-  await expect(page.getByRole('link', { name: 'View on map: Near pharmacy' })).toHaveAttribute(
+  await expect(page.getByRole('link', { name: 'Open in OpenStreetMap: Near pharmacy' })).toHaveAttribute(
     'href',
     /openstreetmap\.org/,
   );
@@ -66,6 +66,8 @@ test('cancel invalidates delayed results', async ({ page }) => {
   await expect(page.locator('#list li')).toHaveCount(0);
 });
 test('mobile reduced motion and dark theme remain usable', async ({ page }) => {
+  // In season the header carries the most controls, so it is the narrowest case.
+  await page.clock.setFixedTime(new Date('2026-12-20T12:00:00Z'));
   await page.setViewportSize({ width: 320, height: 740 });
   await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'dark' });
   await page.goto('/');
@@ -101,6 +103,8 @@ test('map requires explicit action and closes with restored focus', async ({ pag
   expect(maps).toBe(0);
   await button.click();
   await expect(page.locator('#map-frame iframe')).toHaveAttribute('src', /marker=60.452%2C22.267/);
+  // The map opens inside the pharmacy's own row.
+  await expect(page.locator('#list li').first().locator('#map-panel')).toBeVisible();
   await page.locator('#close-map').click();
   await expect(page.locator('#map-panel')).toBeHidden();
   await expect(button).toBeFocused();
@@ -198,6 +202,7 @@ test.describe('automated accessibility checks', () => {
   }
 
   test('keyboard order follows the page and every stop shows a focus indicator', async ({ page }) => {
+    await page.clock.setFixedTime(new Date('2026-10-15T12:00:00Z'));
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
     const stops = [];
@@ -217,13 +222,13 @@ test.describe('automated accessibility checks', () => {
     expect(stops.map(stop => stop.id)).toEqual([
       'skip',
       'brand',
+      'theme-toggle',
       'language',
       'locate',
       'privacy-summary',
       'city',
       'search-label',
       'directory',
-      'A',
     ]);
     expect(stops.every(stop => stop.visible)).toBe(true);
   });
@@ -279,7 +284,7 @@ test('Christmas details are seasonal and never obstruct search results', async (
   await page.clock.setFixedTime(new Date('2026-12-20T12:00:00Z'));
   await page.route(endpoint, r => fulfill(r, fixture));
   await page.goto('/');
-  await expect(page.locator('body')).toHaveAttribute('data-season', 'christmas');
+  await expect(page.locator('html')).toHaveAttribute('data-season', 'christmas');
   await expect(page.locator('.festive-art')).toBeVisible();
   await page.screenshot({
     path: testInfo.outputPath('nordic-christmas.png'),
@@ -342,9 +347,10 @@ test('local catalog renders results while both live providers are unavailable', 
   await page.locator('#search-label').click();
   await expect(page.locator('#list li').first()).toContainText('Near pharmacy');
   await page.locator('#result-details summary').click();
-  await expect(page.locator('#source-note')).toHaveText(
-    'OSM catalog date: 2026-11-25 Only pharmacies mapped in Finland are included.',
-  );
+  await expect(page.locator('#source-notes p')).toHaveText([
+    'OSM catalog date: 2026-11-25',
+    'Only pharmacies mapped in Finland are included.',
+  ]);
   expect(liveRequests).toBe(0);
 });
 
@@ -366,9 +372,100 @@ test('mobile search keeps details collapsed and preserves readable hours', async
   await expect(page.locator('#list li')).toHaveCount(1);
   await expect(page.getByRole('status')).toHaveText('1 mapped pharmacy · Turku');
   await expect(page.locator('#result-details')).not.toHaveAttribute('open', '');
-  await expect(page.locator('.hours-value')).toHaveText('Mo-Fr 09:00-18:00 · Sa 10:00-14:00');
+  await expect(page.locator('.hours-value')).toHaveText('Mon–Fri 09:00–18:00 · Sat 10:00–14:00');
   await page.locator('#result-details summary').click();
   await expect(page.locator('#distance-note')).toBeVisible();
+
+  await page.locator('#language').selectOption('fi');
+  await expect(page.locator('.hours-value')).toHaveText('ma–pe 09.00–18.00 · la 10.00–14.00');
+  // The distance shares the first line with the name instead of sitting under the hours.
+  const name = await page.locator('#list li h3').boundingBox();
+  const distance = await page.locator('#list li .distance').boundingBox();
+  expect(distance.y).toBeLessThan(name.y + name.height);
+});
+
+test.describe('theme', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.clock.setFixedTime(new Date('2026-10-15T12:00:00Z'));
+  });
+
+  test('the page follows the system theme until the visitor chooses one', async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await page.goto('/');
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    await expect(page.locator('#theme-toggle')).toHaveAttribute('aria-pressed', 'true');
+    await page.emulateMedia({ colorScheme: 'light' });
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  });
+
+  test('a chosen theme overrides the system and is remembered', async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 'light' });
+    await page.goto('/');
+    const toggle = page.getByRole('button', { name: 'Dark theme' });
+    await expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    await toggle.click();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe(
+      'rgb(32, 39, 36)',
+    );
+    await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', '#202724');
+
+    await page.reload();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    await page.emulateMedia({ colorScheme: 'light' });
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    await page.getByRole('button', { name: 'Dark theme' }).click();
+    await page.reload();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  });
+});
+
+test.describe('season', () => {
+  test('snow and the melody start only on request', async ({ page }) => {
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.clock.setFixedTime(new Date('2026-12-20T12:00:00Z'));
+    await page.goto('/');
+    await expect(page.locator('.garland-bulbs i')).toHaveCount(18);
+    await expect(page.locator('#greeting')).toHaveText('Merry Christmas');
+
+    const snow = page.getByRole('button', { name: 'Snowfall' });
+    await expect(page.locator('#snowfall')).toBeHidden();
+    await snow.click();
+    await expect(snow).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('#snowfall')).toBeVisible();
+    await snow.click();
+    await expect(snow).toHaveAttribute('aria-pressed', 'false');
+    await expect(page.locator('#snowfall')).toBeHidden();
+
+    const melody = page.getByRole('button', { name: 'Christmas melody' });
+    await melody.click();
+    await expect(melody).toHaveAttribute('aria-pressed', 'true');
+    await melody.click();
+    await expect(melody).toHaveAttribute('aria-pressed', 'false');
+    expect(errors).toEqual([]);
+  });
+
+  test('snow stays still with reduced motion', async ({ page }) => {
+    await page.clock.setFixedTime(new Date('2026-12-20T12:00:00Z'));
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Snowfall' }).click();
+    const frame = () => page.locator('#snowfall').evaluate(canvas => canvas.toDataURL());
+    const first = await frame();
+    await page.waitForTimeout(300);
+    expect(await frame()).toBe(first);
+  });
+
+  test('outside the season there are no festive controls or decorations', async ({ page }) => {
+    await page.clock.setFixedTime(new Date('2026-10-15T12:00:00Z'));
+    await page.goto('/');
+    await expect(page.locator('#snow-toggle')).toBeHidden();
+    await expect(page.locator('#melody-toggle')).toBeHidden();
+    await expect(page.locator('#greeting')).toBeHidden();
+    await expect(page.locator('.garland-bulbs i')).toHaveCount(0);
+  });
 });
 
 test.describe('browser language preference', () => {

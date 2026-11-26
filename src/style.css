@@ -1,13 +1,10 @@
-/* Finnish functionalism: paper, pine, granite, water. No external fonts or assets. */
+/* Finnish functionalism: paper, pine, granite, water. No external fonts or assets.
+   theme-init.js sets data-theme (light or dark) and data-season on <html> before the first paint. */
+
+/* ---------- Tokens ---------- */
+
 :root {
-  color-scheme: light dark;
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    sans-serif;
-  font-size: 16px;
-  line-height: 1.6;
+  color-scheme: light;
   --paper: #f6f4ee;
   --surface: #fffdf8;
   --ink: #202b28;
@@ -20,6 +17,82 @@
   --land: #dee5d9;
   --contour: #819c92;
   --wash: #e7ede4;
+  /* Roles that the season recolours. */
+  --accent: var(--pine);
+  --on-accent: var(--on-pine);
+  --brand: var(--pine);
+  --gold: var(--line);
+  --snow: #fffdf5;
+  --flake: #9db4bf;
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --paper: #202724;
+  --surface: #29322e;
+  --ink: #f1f0e8;
+  --muted: #bdc9c1;
+  --pine: #aed5bd;
+  --on-pine: #172e24;
+  --line: #46574e;
+  --focus: #f5b181;
+  --water: #334d4b;
+  --land: #3c5143;
+  --contour: #789b8b;
+  --wash: #303f36;
+  --flake: #f2f4ef;
+}
+
+/* Nordic Christmas: evergreen wayfinding, cranberry actions, candlelight paper. Gold is decorative;
+   every text colour keeps at least 4.5:1 contrast. */
+:root[data-season='christmas'] {
+  --paper: #fff8ed;
+  --surface: #fffcf5;
+  --ink: #302821;
+  --muted: #62534a;
+  --pine: #194b38;
+  --on-pine: #fffdf5;
+  --line: #dbcab5;
+  --focus: #a04e24;
+  --water: #a8c6b8;
+  --land: #e9dfc8;
+  --contour: #5f8b74;
+  --wash: #e5eddf;
+  --accent: #8b263b;
+  --on-accent: #fff8ed;
+  --brand: #8b263b;
+  --gold: #aa7934;
+  --snow: #fffdf5;
+}
+:root[data-season='christmas'][data-theme='dark'] {
+  --paper: #202a24;
+  --surface: #2d3830;
+  --ink: #fff3df;
+  --muted: #d3c9b9;
+  --pine: #b5d9bd;
+  --on-pine: #172e24;
+  --line: #59685b;
+  --focus: #efb773;
+  --water: #315b49;
+  --land: #414e38;
+  --contour: #91ad85;
+  --wash: #34473a;
+  --accent: #ae3e54;
+  --on-accent: #fff9ee;
+  --brand: #f0a9b5;
+  --gold: #e4bd76;
+  --snow: #f5ecdc;
+}
+
+/* ---------- Base ---------- */
+
+:root {
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
   background: var(--paper);
   color: var(--ink);
 }
@@ -28,86 +101,12 @@
 }
 body {
   margin: 0;
-}
-.shell {
-  width: min(100% - 3rem, 72rem);
-  margin-inline: auto;
-}
-.masthead {
-  min-height: 92px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  border-bottom: 1px solid var(--line);
-}
-.brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
+  min-height: 100vh;
+  background: var(--paper);
   color: var(--ink);
-  font-size: 1.3rem;
-  font-weight: 720;
-  letter-spacing: -0.055em;
-  text-decoration: none;
-  white-space: nowrap;
 }
-.brand-dot {
+a {
   color: var(--pine);
-  margin-left: -0.55rem;
-}
-.mark {
-  width: 30px;
-  height: 30px;
-  display: grid;
-  place-items: center;
-  color: var(--pine);
-  border: 1px solid var(--pine);
-  border-radius: 3px;
-}
-.mark svg {
-  width: 20px;
-  height: 20px;
-}
-.language {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  color: var(--muted);
-  font-size: 0.85rem;
-}
-.hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
-  gap: clamp(2rem, 6vw, 6rem);
-  padding: clamp(2.6rem, 7vw, 5.5rem) 0 3.2rem;
-  align-items: center;
-}
-.hero-copy {
-  min-width: 0;
-}
-.eyebrow {
-  font-size: 0.73rem;
-  letter-spacing: 0.16em;
-  font-weight: 700;
-  color: var(--pine);
-  margin: 0 0 1.1rem;
-}
-h1 {
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: clamp(2.7rem, 5.4vw, 4.75rem);
-  font-weight: 400;
-  line-height: 1.05;
-  letter-spacing: -0.045em;
-  margin: 0;
-  max-width: 13ch;
-  overflow-wrap: break-word;
-}
-.intro {
-  font-size: 1.08rem;
-  max-width: 43ch;
-  margin: 1.35rem 0 1.75rem;
-  color: var(--muted);
 }
 button,
 select {
@@ -124,22 +123,160 @@ button {
   font-weight: 650;
   cursor: pointer;
 }
-a {
-  color: var(--pine);
-}
 a:focus-visible,
 button:focus-visible,
-select:focus-visible {
+select:focus-visible,
+summary:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 4px;
+}
+h1 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(2.7rem, 5.4vw, 4.75rem);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.045em;
+  margin: 0;
+  max-width: 13ch;
+  overflow-wrap: break-word;
+}
+h2 {
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  margin: 0;
+}
+[hidden] {
+  display: none !important;
+}
+.shell {
+  width: min(100% - 3rem, 72rem);
+  margin-inline: auto;
+}
+.skip {
+  position: absolute;
+  top: -200px;
+  left: 1rem;
+  background: var(--surface);
+  padding: 1rem;
+  z-index: 20;
+}
+.skip:focus {
+  top: 0;
+}
+
+/* ---------- Header ---------- */
+
+.masthead {
+  position: relative;
+  min-height: 92px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  border-bottom: 1px solid var(--line);
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--ink);
+  font-size: 1.3rem;
+  font-weight: 720;
+  letter-spacing: -0.055em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.brand-dot {
+  color: var(--brand);
+  margin-left: -0.55rem;
+}
+.mark {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  color: var(--brand);
+  border: 1px solid var(--brand);
+  border-radius: 3px;
+}
+.mark svg {
+  width: 20px;
+  height: 20px;
+}
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.icon-button {
+  width: 44px;
+  min-height: 44px;
+  height: 44px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  border-color: var(--line);
+  background: transparent;
+  color: var(--pine);
+}
+.icon-button svg {
+  width: 22px;
+  height: 22px;
+}
+.icon-button[aria-pressed='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+.language {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-left: 0.35rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* ---------- Hero ---------- */
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: clamp(2rem, 6vw, 6rem);
+  padding: clamp(2.6rem, 7vw, 5.5rem) 0 3.2rem;
+  align-items: center;
+}
+.hero-copy {
+  min-width: 0;
+}
+.eyebrow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0.6em;
+  font-size: 0.73rem;
+  letter-spacing: 0.16em;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--brand);
+  margin: 0 0 1.1rem;
+}
+.intro {
+  font-size: 1.08rem;
+  max-width: 43ch;
+  margin: 1.35rem 0 1.75rem;
+  color: var(--muted);
 }
 .primary {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  color: var(--on-pine);
-  background: var(--pine);
-  border-color: var(--pine);
+  color: var(--on-accent);
+  background: var(--accent);
+  border-color: var(--accent);
   min-height: 56px;
   max-width: 24rem;
   width: 100%;
@@ -154,16 +291,38 @@ select:focus-visible {
   height: 23px;
   flex: none;
 }
-.button-arrow {
-  margin-left: auto;
-  font-size: 1.25rem;
-  flex: none;
+.secondary {
+  background: transparent;
+  border-color: var(--pine);
+  color: var(--pine);
+  transition: background 0.18s;
+}
+.text-button {
+  background: transparent;
+  border: 0;
+  color: var(--pine);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.privacy-details {
+  max-width: 24rem;
+  margin: 0.5rem 0 1.15rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.privacy-details summary,
+.result-details summary {
+  min-height: 44px;
+  display: list-item;
+  align-content: center;
+  cursor: pointer;
+  color: var(--pine);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 .privacy {
-  font-size: 0.83rem;
   max-width: 55ch;
-  color: var(--muted);
-  margin: 0.75rem 0 1.7rem;
+  margin: 0 0 0.7rem;
 }
 form label {
   display: block;
@@ -180,20 +339,14 @@ form label {
   flex: 1;
   min-width: 0;
 }
-.secondary {
-  background: transparent;
-  border-color: var(--pine);
-  color: var(--pine);
-  transition: background 0.18s;
-}
+
+/* Decorative contour art; never an actual map. */
 .landscape {
   overflow: hidden;
   aspect-ratio: 1/1.06;
   max-height: 540px;
   border: 1px solid var(--line);
   border-radius: 3px;
-  position: relative;
-  isolation: isolate;
 }
 .landscape svg {
   width: 100%;
@@ -215,19 +368,25 @@ form label {
   stroke-opacity: 0.45;
 }
 .art-disc {
-  fill: var(--pine);
+  fill: var(--accent);
 }
 .art-cross {
-  stroke: var(--on-pine);
+  stroke: var(--on-accent);
 }
 .locator-art {
   transform-box: fill-box;
   transform-origin: center;
   animation: arrive 0.65s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
+
+/* ---------- Results ---------- */
+
 .results {
   border-top: 1px solid var(--line);
   padding: 1.8rem 0 3rem;
+}
+#results-heading {
+  scroll-margin-top: 1rem;
 }
 .result-header {
   display: flex;
@@ -235,19 +394,6 @@ form label {
   align-items: center;
   gap: 1rem;
   flex-wrap: wrap;
-}
-h2 {
-  font-size: clamp(1.35rem, 3vw, 1.75rem);
-  font-weight: 650;
-  letter-spacing: -0.035em;
-  margin: 0;
-}
-.text-button {
-  background: transparent;
-  border: 0;
-  color: var(--pine);
-  text-decoration: underline;
-  text-underline-offset: 4px;
 }
 .status-line {
   display: flex;
@@ -299,6 +445,41 @@ h2 {
   max-width: 54%;
   animation-delay: 0.24s;
 }
+.recovery,
+.result-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem 1.25rem;
+  flex-wrap: wrap;
+  margin: 1rem 0;
+}
+.recovery {
+  padding: 1rem 0;
+  border-block: 1px solid var(--line);
+}
+.recovery a,
+.result-tools a,
+.directory-link a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 0.9rem;
+}
+.result-details {
+  margin: 0.35rem 0 1rem;
+  color: var(--muted);
+  font-size: 0.83rem;
+}
+.result-details p {
+  margin: 0.3rem 0;
+}
+.directory-link,
+.map-disclosure {
+  color: var(--muted);
+  font-size: 0.83rem;
+}
+
+/* One pharmacy: name and details on the left, the distance beside the name, actions below it. */
 ol {
   list-style: none;
   margin: 0;
@@ -311,22 +492,31 @@ ol:empty {
 .pharmacy {
   display: grid;
   grid-template-columns: 2.4rem minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 1rem;
+  grid-template-areas:
+    'rank info distance'
+    'rank info actions';
+  grid-template-rows: auto 1fr;
+  column-gap: 1rem;
+  row-gap: 0.2rem;
   padding: 1.2rem 0.9rem;
   border-bottom: 1px solid var(--line);
   animation: row-in 0.28s ease-out both;
 }
 .pharmacy.closest {
   background: var(--wash);
-  border-left: 3px solid var(--pine);
-  padding-left: calc(0.9rem - 3px);
+  border-left: 4px solid var(--accent);
+  padding-left: calc(0.9rem - 4px);
 }
 .rank {
+  grid-area: rank;
   align-self: center;
   color: var(--muted);
   font-size: 0.8rem;
   font-variant-numeric: tabular-nums;
+}
+.pharmacy-info {
+  grid-area: info;
+  min-width: 0;
 }
 .pharmacy h3 {
   font-size: 1.1rem;
@@ -334,6 +524,9 @@ ol:empty {
   font-weight: 650;
   margin: 0;
   overflow-wrap: anywhere;
+}
+.pharmacy.closest h3 {
+  font-size: 1.25rem;
 }
 .pharmacy p {
   margin: 0.3rem 0 0;
@@ -349,14 +542,9 @@ ol:empty {
   text-transform: uppercase;
   margin: 0 0 0.4rem;
 }
-.pharmacy-action {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.15rem;
-  min-width: 0;
-}
 .distance {
+  grid-area: distance;
+  justify-self: end;
   font-size: clamp(1.15rem, 2.7vw, 1.65rem);
   line-height: 1.3;
   letter-spacing: -0.045em;
@@ -364,20 +552,88 @@ ol:empty {
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
-.pharmacy a {
+.pharmacy.closest .distance {
+  font-size: 1.75rem;
+}
+.pharmacy-action {
+  grid-area: actions;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 0.15rem;
+}
+.pharmacy a,
+.map-preview {
   min-height: 44px;
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
   font-size: 0.86rem;
   font-weight: 650;
+  text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 4px;
 }
+.map-preview {
+  border: 0;
+  background: transparent;
+  color: var(--pine);
+  padding: 0.4rem 0;
+}
 .pharmacy a::after {
-  content: '↗';
+  content: '↗' / '';
   font-size: 1.05em;
 }
+.pharmacy .hours {
+  font-size: 0.8rem;
+  max-width: 52ch;
+}
+.hours-label,
+.hours-value {
+  display: block;
+}
+.hours-label {
+  font-size: 0.74rem;
+}
+.hours-value {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+/* A rule such as "Sun 11:00–18:00" never breaks in the middle. */
+.hours-rule {
+  white-space: nowrap;
+}
+
+/* The optional map opens inside the selected row. */
+.map-panel {
+  grid-column: 1 / -1;
+  margin-top: 0.8rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--line);
+}
+.map-panel .text-button {
+  padding-inline: 0;
+}
+.map-panel h3 {
+  font-size: 1.05rem;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.map-panel p {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+#map-frame iframe {
+  display: block;
+  width: 100%;
+  height: clamp(260px, 48vw, 440px);
+  border: 1px solid var(--line);
+  background: var(--wash);
+}
+
+/* ---------- Footer ---------- */
+
 footer {
   border-top: 1px solid var(--line);
   display: grid;
@@ -393,24 +649,173 @@ footer p {
   max-width: 65ch;
 }
 .footer-mark {
-  color: var(--pine);
+  color: var(--brand);
   font-weight: 750;
   line-height: 1.6;
 }
-.skip {
+
+/* ---------- Once a search has an outcome, the hero yields its space to the results ---------- */
+
+body[data-outcome] .hero {
+  padding: 1.7rem 0 1.5rem;
+  grid-template-columns: 1fr;
+}
+body[data-outcome] .landscape,
+body[data-outcome] .intro {
+  display: none;
+}
+body[data-outcome] h1 {
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  max-width: none;
+}
+@media (min-width: 761px) {
+  body[data-outcome] .hero-copy {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0.5rem 2rem;
+    align-items: end;
+  }
+  body[data-outcome] .hero-copy h1,
+  .hero-copy .eyebrow {
+    grid-column: 1/-1;
+  }
+  body[data-outcome] .hero-copy form {
+    grid-column: 2;
+    grid-row: 3/5;
+    align-self: start;
+  }
+}
+
+/* ---------- Season ---------- */
+
+.festive-only,
+.festive-art {
+  display: none;
+}
+:root[data-season='christmas'] .icon-button.festive-only {
+  display: inline-grid;
+}
+:root[data-season='christmas'] .greeting {
+  display: inline;
+}
+:root[data-season='christmas'] .festive-art {
+  display: inline;
+}
+:root[data-season='christmas'] .garland {
+  display: block;
+}
+:root[data-season='christmas'] .masthead,
+:root[data-season='christmas'] .landscape {
+  border-color: var(--gold);
+}
+/* Room for the lights to hang without touching the content below. */
+:root[data-season='christmas'] .masthead {
+  margin-bottom: 0.9rem;
+}
+.greeting::before {
+  content: '✦' / '';
+  margin-right: 0.6em;
+  color: var(--gold);
+}
+.greeting {
+  white-space: nowrap;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-size: 1.05rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+:root[data-season='christmas'] .closest-label::before {
+  content: '✦' / '';
+  margin-right: 0.45em;
+  color: var(--gold);
+}
+
+/* A string of lights hanging from the header rule. */
+.garland {
   position: absolute;
-  top: -200px;
-  left: 1rem;
-  background: var(--surface);
-  padding: 1rem;
-  z-index: 5;
+  inset: auto 0 -16px 0;
+  height: 26px;
+  pointer-events: none;
 }
-.skip:focus {
-  top: 0;
+.garland-wire {
+  position: absolute;
+  inset: 0 0 auto 0;
+  width: 100%;
+  height: 14px;
 }
-[hidden] {
-  display: none !important;
+.garland-wire path {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 1;
 }
+.garland-bulbs {
+  position: absolute;
+  inset: 10px 0 auto 0;
+  display: flex;
+  justify-content: space-around;
+}
+.garland-bulbs i {
+  width: 8px;
+  height: 12px;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  background: var(--accent);
+  animation: twinkle 2.6s ease-in-out infinite;
+}
+.garland-bulbs i:nth-child(3n + 2) {
+  background: var(--gold);
+  animation-delay: 0.9s;
+}
+.garland-bulbs i:nth-child(3n) {
+  background: var(--pine);
+  animation-delay: 1.7s;
+}
+:root[data-theme='dark'] .garland-bulbs i {
+  box-shadow: 0 0 6px currentColor;
+  color: var(--gold);
+}
+
+/* Winter details inside the artwork. */
+.winter-pines {
+  stroke: var(--pine);
+}
+.winter-gold,
+.tree-star {
+  stroke: var(--gold);
+}
+.winter-gold {
+  stroke-width: 2.2;
+}
+.tree-star {
+  fill: var(--gold);
+  stroke-width: 1;
+}
+.bauble {
+  fill: var(--accent);
+}
+.bauble.gold {
+  fill: var(--gold);
+}
+.winter-snow,
+.winter-flakes {
+  stroke: var(--snow);
+  opacity: 0.9;
+}
+
+/* Snow drawn on demand over the whole window; it never takes clicks or focus. */
+.snowfall {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10;
+  color: var(--flake);
+}
+
+/* ---------- Motion ---------- */
+
 @keyframes arrive {
   from {
     opacity: 0.4;
@@ -434,85 +839,27 @@ footer p {
     opacity: 0.45;
   }
 }
+@keyframes twinkle {
+  50% {
+    opacity: 0.45;
+  }
+}
 @media (hover: hover) {
   .primary:hover {
     filter: brightness(1.1);
     transform: translateY(-1px);
   }
-  .secondary:hover {
+  .secondary:hover,
+  .icon-button:hover {
     background: var(--wash);
   }
-  .pharmacy a:hover {
+  .icon-button[aria-pressed='true']:hover {
+    background: var(--accent);
+    filter: brightness(1.1);
+  }
+  .pharmacy a:hover,
+  .map-preview:hover {
     text-decoration-thickness: 2px;
-  }
-}
-@media (max-width: 760px) {
-  .shell {
-    width: calc(100% - 2rem);
-  }
-  .masthead {
-    min-height: 74px;
-  }
-  .hero {
-    grid-template-columns: 1fr;
-    gap: 1.8rem;
-    padding: 2.8rem 0 2rem;
-  }
-  .landscape {
-    aspect-ratio: 2.6/1;
-    max-height: 210px;
-  }
-  .hero-copy h1 {
-    max-width: 14ch;
-  }
-  footer {
-    grid-template-columns: auto minmax(0, 1fr);
-  }
-  footer a {
-    grid-column: 2;
-  }
-}
-@media (max-width: 420px) {
-  .masthead {
-    flex-wrap: wrap;
-    padding: 0.7rem 0;
-  }
-  .language {
-    gap: 0.3rem;
-  }
-  .pharmacy {
-    grid-template-columns: 1.5rem minmax(0, 1fr);
-    gap: 0.5rem 0.7rem;
-  }
-  .pharmacy-action {
-    grid-column: 2;
-    align-items: flex-start;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-  }
-  .rank {
-    align-self: start;
-  }
-  .landscape {
-    aspect-ratio: 3/1;
-  }
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --paper: #202724;
-    --surface: #29322e;
-    --ink: #f1f0e8;
-    --muted: #bdc9c1;
-    --pine: #aed5bd;
-    --on-pine: #172e24;
-    --line: #46574e;
-    --focus: #f5b181;
-    --water: #334d4b;
-    --land: #3c5143;
-    --contour: #789b8b;
-    --wash: #303f36;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -525,326 +872,49 @@ footer p {
   }
 }
 
-/* The selected map is optional; results remain readable without it. */
-.map-disclosure,
-.directory-link {
-  color: var(--muted);
-  font-size: 0.83rem;
-}
-.map-panel {
-  margin: 1rem 0 1.5rem;
-  padding: 1rem 0;
-  border-block: 1px solid var(--line);
-}
-.map-panel h3 {
-  font-size: 1.1rem;
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-.map-panel p {
-  color: var(--muted);
-  font-size: 0.85rem;
-}
-#map-frame iframe {
-  display: block;
-  width: 100%;
-  height: clamp(260px, 48vw, 440px);
-  border: 1px solid var(--line);
-  background: var(--wash);
-}
-.map-preview {
-  border: 0;
-  background: transparent;
-  color: var(--pine);
-  text-decoration: underline;
-  text-underline-offset: 4px;
-  padding: 0.4rem 0;
-  font-size: 0.86rem;
-  min-height: 44px;
-}
-.pharmacy .hours {
-  font-size: 0.8rem;
-  max-width: 48ch;
-}
-.directory-link a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-}
-@media (max-width: 420px) {
-  .pharmacy-action {
-    justify-content: flex-start;
-    gap: 0.3rem 1rem;
-  }
-  .pharmacy-action .distance {
-    flex-basis: 100%;
-  }
-}
+/* ---------- Narrow screens ---------- */
 
-/* Task-first layout: the search never competes with the results. */
-.privacy-details {
-  max-width: 24rem;
-  margin: 0.5rem 0 1.15rem;
-  color: var(--muted);
-  font-size: 0.85rem;
-}
-.privacy-details summary {
-  cursor: pointer;
-  min-height: 44px;
-  display: list-item;
-  align-content: center;
-  color: var(--pine);
-  text-underline-offset: 3px;
-  text-decoration: underline;
-}
-.privacy-details summary:focus-visible {
-  outline: 3px solid var(--focus);
-  outline-offset: 3px;
-}
-.privacy-details .privacy {
-  margin: 0 0 0.7rem;
-}
-.recovery,
-.result-tools {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem 1.25rem;
-  flex-wrap: wrap;
-  margin: 1rem 0;
-}
-.recovery {
-  padding: 1rem 0;
-  border-block: 1px solid var(--line);
-}
-.recovery a,
-.result-tools a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  font-size: 0.9rem;
-}
-.distance-note {
-  font-size: 0.83rem;
-  color: var(--muted);
-  margin: 0.45rem 0;
-}
-/* Once a search has an outcome, the hero yields its space to the results. */
-body[data-outcome] .hero {
-  padding: 1.7rem 0 1.5rem;
-  grid-template-columns: 1fr;
-}
-body[data-outcome] .landscape {
-  display: none;
-}
-body[data-outcome] h1 {
-  font-size: clamp(1.8rem, 3vw, 2.6rem);
-  max-width: none;
-}
-body[data-outcome] .intro {
-  display: none;
-}
-@media (min-width: 761px) {
-  body[data-outcome] .hero-copy {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 0.5rem 2rem;
-    align-items: end;
-  }
-  body[data-outcome] .hero-copy h1,
-  .hero-copy .eyebrow {
-    grid-column: 1/-1;
-  }
-  body[data-outcome] .hero-copy form {
-    grid-column: 2;
-    grid-row: 3/5;
-    align-self: start;
-  }
-}
 @media (max-width: 760px) {
+  .shell {
+    width: calc(100% - 2rem);
+  }
+  .masthead {
+    min-height: 74px;
+    padding: 0.7rem 0;
+  }
   .hero {
+    grid-template-columns: 1fr;
+    gap: 1.8rem;
     padding: 1.8rem 0 1.5rem;
   }
-  .landscape {
-    max-height: 110px;
+  .hero-copy h1 {
+    max-width: 14ch;
   }
   .intro {
     margin: 1rem 0;
   }
-  .pharmacy.closest .distance {
-    font-size: 1.65rem;
+  .landscape {
+    width: 100%;
+    aspect-ratio: 2.6/1;
+    max-height: 110px;
   }
-}
-
-/* Nordic Christmas: still, decorative, and limited to the winter season. */
-.festive-art {
-  display: none;
-}
-body[data-season='christmas'] {
-  --winter-gold: #947443;
-  --winter-snow: #faf8ef;
-}
-body[data-season='christmas'] .festive-art {
-  display: inline;
-}
-body[data-season='christmas'] .winter-pines {
-  stroke: var(--pine);
-  opacity: 0.72;
-}
-body[data-season='christmas'] .winter-gold {
-  stroke: var(--winter-gold);
-}
-body[data-season='christmas'] .winter-snow {
-  stroke: var(--winter-snow);
-  opacity: 0.88;
-}
-body[data-season='christmas'] .masthead {
-  border-bottom-color: var(--winter-gold);
-}
-@media (prefers-color-scheme: dark) {
-  body[data-season='christmas'] {
-    --winter-gold: #d4b478;
-    --winter-snow: #d9e5df;
-  }
-}
-
-/* Keep seasonal details in the visible crop of the compact mobile artwork. */
-@media (max-width: 760px) {
-  body[data-season='christmas'] .winter-pines {
+  /* Keep the seasonal details in the visible crop of the compact artwork. */
+  .winter-pines,
+  .winter-ornaments {
     transform: translateY(-160px);
   }
-  body[data-season='christmas'] .winter-gold {
+  .winter-gold {
     transform: translateY(100px);
   }
-  body[data-season='christmas'] .winter-snow {
+  .winter-snow {
     transform: translateY(-150px);
   }
-}
-
-/* Seasonal palette: evergreen wayfinding, cranberry actions, candlelight paper.
-   Gold is decorative; all functional text retains a dark or light ink color. */
-body[data-season='christmas'] {
-  --paper: #fff8ed;
-  --surface: #fffcf5;
-  --ink: #302821;
-  --muted: #62534a;
-  --pine: #194b38;
-  --on-pine: #fffdf5;
-  --line: #dbcab5;
-  --focus: #a04e24;
-  --water: #a8c6b8;
-  --land: #e9dfc8;
-  --contour: #5f8b74;
-  --wash: #e5eddf;
-  --cranberry: #8b263b;
-  --on-cranberry: #fff8ed;
-  --winter-gold: #aa7934;
-  --winter-snow: #fffdf5;
-  background: var(--paper);
-  color: var(--ink);
-  min-height: 100vh;
-}
-body[data-season='christmas'] .primary {
-  background: var(--cranberry);
-  border-color: var(--cranberry);
-  color: var(--on-cranberry);
-}
-body[data-season='christmas'] .eyebrow,
-body[data-season='christmas'] .brand-dot {
-  color: var(--cranberry);
-}
-body[data-season='christmas'] .mark {
-  border-color: var(--cranberry);
-  color: var(--cranberry);
-}
-body[data-season='christmas'] .landscape {
-  border-color: var(--winter-gold);
-}
-body[data-season='christmas'] .art-disc {
-  fill: var(--cranberry);
-}
-body[data-season='christmas'] .art-cross {
-  stroke: var(--on-cranberry);
-}
-body[data-season='christmas'] .winter-pines {
-  opacity: 1;
-}
-body[data-season='christmas'] .winter-gold {
-  stroke-width: 2.2;
-}
-@media (prefers-color-scheme: dark) {
-  body[data-season='christmas'] {
-    --paper: #202a24;
-    --surface: #2d3830;
-    --ink: #fff3df;
-    --muted: #d3c9b9;
-    --pine: #b5d9bd;
-    --on-pine: #172e24;
-    --line: #59685b;
-    --focus: #efb773;
-    --water: #315b49;
-    --land: #414e38;
-    --contour: #91ad85;
-    --wash: #34473a;
-    --cranberry: #ae3e54;
-    --on-cranberry: #fff9ee;
-    --winter-gold: #e4bd76;
-    --winter-snow: #f5ecdc;
+  footer {
+    grid-template-columns: auto minmax(0, 1fr);
   }
-  body[data-season='christmas'] .eyebrow,
-  body[data-season='christmas'] .brand-dot,
-  body[data-season='christmas'] .mark {
-    color: #f0a9b5;
+  footer a {
+    grid-column: 2;
   }
-  body[data-season='christmas'] .mark {
-    border-color: #f0a9b5;
-  }
-}
-
-/* Results-first, with details available without competing for attention. */
-.result-details {
-  margin: 0.35rem 0 1rem;
-  color: var(--muted);
-  font-size: 0.83rem;
-}
-.result-details summary {
-  min-height: 44px;
-  align-content: center;
-  cursor: pointer;
-  color: var(--pine);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-.result-details summary:focus-visible {
-  outline: 3px solid var(--focus);
-  outline-offset: 3px;
-}
-.result-details p {
-  margin: 0.35rem 0 0.65rem;
-}
-#results-heading {
-  scroll-margin-top: 1rem;
-}
-.hours-label,
-.hours-value {
-  display: block;
-}
-.hours-label {
-  font-size: 0.74rem;
-}
-.hours-value {
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-}
-.pharmacy.closest {
-  border-left-width: 4px;
-}
-.pharmacy.closest h3 {
-  font-size: 1.25rem;
-}
-.pharmacy.closest .distance {
-  font-size: 1.75rem;
-}
-@media (max-width: 760px) {
   body[data-search-state='found'] .hero {
     padding: 1rem 0 0.85rem;
   }
@@ -861,14 +931,56 @@ body[data-season='christmas'] .winter-gold {
   body[data-search-state='found'] .results {
     padding-top: 1rem;
   }
-  .pharmacy {
-    padding: 0.9rem 0.65rem;
-    gap: 0.65rem;
+  .status-line {
+    margin-bottom: 0.3rem;
   }
   .result-details {
     margin-bottom: 0.55rem;
   }
-  .status-line {
-    margin-bottom: 0.3rem;
+}
+@media (max-width: 560px) {
+  .pharmacy {
+    grid-template-columns: 1.6rem minmax(0, 1fr) auto;
+    grid-template-areas:
+      'rank info distance'
+      '. actions actions';
+    column-gap: 0.6rem;
+    padding: 0.9rem 0.6rem;
+  }
+  .pharmacy.closest {
+    padding-left: calc(0.6rem - 4px);
+  }
+  .rank {
+    align-self: start;
+    padding-top: 0.2rem;
+  }
+  .distance,
+  .pharmacy.closest .distance {
+    font-size: 1.3rem;
+  }
+  .pharmacy-action {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0 1.1rem;
+  }
+}
+@media (max-width: 480px) {
+  .toolbar {
+    width: 100%;
+    gap: 0.4rem;
+  }
+  .language {
+    margin-left: auto;
+  }
+  /* The select keeps its name from the label; only the visible word goes. */
+  #language-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 }
