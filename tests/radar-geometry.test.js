@@ -1,6 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { bearing, degrees, smoothHeading, orientationHeading, movementHeading, radarRange, radarPoint, isNear, rankedTargets } from '../src/radar-geometry.js';
+import {
+  bearing,
+  degrees,
+  smoothHeading,
+  orientationHeading,
+  movementHeading,
+  radarRange,
+  radarPoint,
+  isNear,
+  rankedTargets,
+} from '../src/radar-geometry.js';
 
 test('cardinal bearings and north wrap', () => {
   const origin = { lat: 0, lon: 0 };
