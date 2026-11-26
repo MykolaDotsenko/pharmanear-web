@@ -4,6 +4,21 @@ import { fetchPharmacies } from './provider.js';
 const catalogURL = './data/finland-pharmacies.json';
 const maxRadius = 30_000;
 const maxAgeDays = 30;
+const refreshAgeDays = 7;
+const dayMs = 86_400_000;
+
+async function loadCatalog(url, signal) {
+  const request = new AbortController();
+  const cancel = () => request.abort();
+  signal?.addEventListener('abort', cancel, { once: true });
+  if (signal?.aborted) cancel();
+  const timer = setTimeout(cancel, 2500);
+  try {
+    const response = await fetch(url, { signal: request.signal, credentials: 'omit', referrerPolicy: 'no-referrer' });
+    if (!response.ok) throw new Error('Catalog unavailable');
+    return await response.json();
+  } finally { clearTimeout(timer); signal?.removeEventListener('abort', cancel); }
+}
 
 export function searchCatalog(payload, origin, now = Date.now()) {
   const timestamp = Date.parse(payload?.sourceDate);
@@ -19,18 +34,23 @@ export function searchCatalog(payload, origin, now = Date.now()) {
 
 /** Search Finland's local snapshot first; use live data when it cannot serve the area. */
 export async function lookupPharmacies(origin, signal, {
-  load = async () => {
-    const response = await fetch(catalogURL, { signal, credentials: 'omit', referrerPolicy: 'no-referrer' });
-    if (!response.ok) throw new Error('Catalog unavailable');
-    return response.json();
-  },
+  load = () => loadCatalog(catalogURL, signal),
+  refresh = () => loadCatalog('./data/current-finland-pharmacies.json', signal),
   live = (point, abortSignal) => search(point, fetchPharmacies, abortSignal),
   now = Date.now,
 } = {}) {
   signal?.throwIfAborted();
   if (validPoint(origin) && origin.lat >= 59 && origin.lat <= 71 && origin.lon >= 19 && origin.lon <= 33) {
     try {
-      const payload = await load();
+      let payload;
+      try { payload = await load(); } catch { signal?.throwIfAborted(); }
+      if (!payload || now() - Date.parse(payload.sourceDate) > refreshAgeDays * dayMs) {
+        try {
+          const latest = await refresh();
+          searchCatalog(latest, origin, now());
+          if (!payload || Date.parse(latest.sourceDate) > Date.parse(payload.sourceDate)) payload = latest;
+        } catch { signal?.throwIfAborted(); }
+      }
       signal?.throwIfAborted();
       const result = searchCatalog(payload, origin, now());
       if (result.results.length) return result;
