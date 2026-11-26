@@ -1,6 +1,6 @@
 import {test,expect} from '@playwright/test';
 const fixture={elements:[{type:'node',id:1,lat:60.47,lon:22.28,tags:{amenity:'pharmacy',name:'Far pharmacy'}},{type:'node',id:2,lat:60.452,lon:22.267,tags:{amenity:'pharmacy',name:'Near pharmacy','addr:street':'Example street'}}]};
-const endpoint='https://overpass-api.de/api/interpreter';
+const endpoint=/^https:\/\/(overpass-api\.de|overpass\.private\.coffee)\/api\/interpreter$/;
 const fulfill=(route,json)=>route.fulfill({json,headers:{'access-control-allow-origin':'*'}});
 test('idle is private, search orders results, accessible map link and locale',async({page})=>{
   let requests=0;await page.route(endpoint,r=>{requests++;expect(r.request().postData()).toContain('60.45');return fulfill(r,fixture);});
@@ -116,4 +116,13 @@ test('Christmas palette uses accessible festive actions in light and dark mode',
  await page.clock.setFixedTime(new Date('2027-01-07T12:00:00Z'));
  await page.reload();
  expect(await background()).not.toBe('rgb(174, 62, 84)');
+});
+
+test('independent provider recovers from a primary outage',async({page})=>{
+ let primary=0,backup=0;
+ await page.route('https://overpass-api.de/api/interpreter',r=>{primary++;return r.fulfill({status:503,headers:{'access-control-allow-origin':'*'}});});
+ await page.route('https://overpass.private.coffee/api/interpreter',r=>{backup++;return fulfill(r,fixture);});
+ await page.goto('/');await page.locator('#search-label').click();
+ await expect(page.locator('#list li').first()).toContainText('Near pharmacy');
+ expect(primary).toBe(1);expect(backup).toBe(1);
 });

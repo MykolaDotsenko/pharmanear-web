@@ -74,3 +74,24 @@ test('transport propagates cancellation to fetch', async () => {
   c.abort();
   await assert.rejects(result, { name: 'AbortError' });
 });
+
+test('transport switches providers after a 503', async () => {
+ const calls=[];
+ const data=await fetchPharmacies('query',new AbortController().signal,async (url,options)=>{
+   calls.push(url);assert.equal(options.body.get('data'),'query');
+   return calls.length===1?{ok:false,status:503}:{ok:true,json:async()=>fixture};
+ });
+ assert.deepEqual(data,fixture);
+ assert.deepEqual(calls,['https://overpass-api.de/api/interpreter','https://overpass.private.coffee/api/interpreter']);
+});
+test('transport respects rate limits and never falls back after a 429',async()=>{
+ let calls=0;
+ await assert.rejects(fetchPharmacies('query',new AbortController().signal,async()=>{calls++;return {ok:false,status:429};}),/429/);
+ assert.equal(calls,1);
+});
+test('transport tries backup for partial provider data, not a valid empty result',async()=>{
+ let calls=0;
+ const data=await fetchPharmacies('query',new AbortController().signal,async()=>({ok:true,json:async()=>++calls===1?{elements:[],remark:'timeout'}:{elements:[]}}));
+ assert.deepEqual(data,{elements:[]});assert.equal(calls,2);
+ calls=0;await fetchPharmacies('query',new AbortController().signal,async()=>{calls++;return {ok:true,json:async()=>({elements:[]})};});assert.equal(calls,1);
+});
