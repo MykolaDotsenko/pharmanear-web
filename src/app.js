@@ -1,7 +1,7 @@
 import {mapsUrl, embedUrl} from './core.js';
 import {strings, extra, ux} from './strings.js';
 import {createSearchController} from './search-controller.js';
-import {fetchPharmacies} from './provider.js';
+import {lookupPharmacies} from './catalog.js';
 
 const $ = id => document.getElementById(id);
 let lang = 'en';
@@ -10,7 +10,7 @@ let selected = null;
 const initialLimit = 5;
 const tr = key => strings[lang][key] ?? extra[lang][key];
 const controller = createSearchController({
-  fetcher: fetchPharmacies,
+  lookup: lookupPharmacies,
   geolocation: navigator.geolocation,
   onChange(next) {
     state = next;
@@ -153,7 +153,8 @@ function render() {
     return;
   }
   const locationName = origin === 'device' ? tr('device') : origin;
-  const notes = [result.covered ? '' : tr('limited'), result.results.length > 20 ? tr('shown') : ''].filter(Boolean);
+  const sourceNote = result.source === 'catalog' ? tr('catalogDate') + ': ' + result.sourceDate.slice(0, 10) : '';
+  const notes = [sourceNote, result.covered ? '' : tr('limited'), result.results.length > 20 ? tr('shown') : ''].filter(Boolean);
   $('status').textContent = tr('found') + ': ' + result.results.length + ' · ' + locationName + '. ' + notes.join(' ');
   for (const [index, pharmacy] of result.results.slice(0, expanded ? 20 : initialLimit).entries()) {
     list.append(pharmacyRow(pharmacy, index));
