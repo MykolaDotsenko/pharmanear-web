@@ -12,8 +12,14 @@
   background: #173b35;
   border-radius: 50%;
 }
-.radar-chart[hidden] {
-  display: none;
+.radar-intro {
+  max-width: 62ch;
+  margin: 0.25rem 0 1rem;
+  color: var(--muted);
+  line-height: 1.55;
+}
+.radar-start {
+  margin-bottom: 0.5rem;
 }
 .radar-ring,
 .radar-axis {
@@ -34,6 +40,12 @@
   fill: #9de4a1;
   stroke: #fff;
   stroke-width: 0.4;
+}
+/* Beyond the displayed range the target is drawn as a ring on the edge. */
+.radar-target.radar-edge {
+  fill: none;
+  stroke: #9de4a1;
+  stroke-width: 1.2;
 }
 .radar-marker {
   fill: #4d8877;
@@ -82,4 +94,44 @@
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
+}
+
+/* Forced colours: system colours keep the target distinct from the other pharmacies and from you. */
+@media (forced-colors: active) {
+  .radar-chart {
+    forced-color-adjust: none;
+    background: Canvas;
+    border: 1px solid CanvasText;
+  }
+  .radar-ring,
+  .radar-axis,
+  .radar-needle {
+    stroke: CanvasText;
+  }
+  .radar-accuracy {
+    fill: GrayText;
+  }
+  .radar-north {
+    fill: CanvasText;
+  }
+  .radar-marker {
+    fill: Canvas;
+    stroke: CanvasText;
+  }
+  .radar-target,
+  .radar-target.radar-edge {
+    fill: Highlight;
+    stroke: CanvasText;
+  }
+  .radar-target.radar-edge {
+    fill: none;
+    stroke: Highlight;
+  }
+  .radar-cross {
+    stroke: CanvasText;
+  }
+  .radar-user {
+    fill: LinkText;
+    stroke: CanvasText;
+  }
 }

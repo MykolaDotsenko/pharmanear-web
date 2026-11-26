@@ -14,7 +14,10 @@ app.js ─┬─► search-controller.js ─► core.js
         ├─► holidays.js        (today in Finland)
         ├─► theme.js           (theme toggle and reveal)
         ├─► effects.js         (pointer depth, results transition)
-        ├─► festive.js         (lights, snow, melody)
+        ├─► festive.js         (lights, snowflakes, snow, melody)
+        ├─► pharmacy-details.js (checked sources, possible duplicates)
+        ├─► radar-view.js ─┬─► radar-session.js ─► radar-geometry.js   (loaded on first use)
+        │                  └─► radar-geometry.js
         └─► strings.js
 
 theme-init.js                  (classic script in <head>, before the first paint)
@@ -51,13 +54,48 @@ network.
 - **`theme-init.js`** is a classic, blocking script in `<head>`: it sets `data-theme` (the stored choice, else
   the system's) and `data-season` on `<html>` before the first paint, so neither flashes. The stylesheet reads
   only those attributes; `theme.js` keeps following the system theme until the visitor chooses one.
-- **`festive.js`** builds the string of lights and drives the snow canvas and the Web Audio melody. Both start
-  only from their toggle buttons (`aria-pressed`), and snow is drawn once and kept still under reduced motion
-  and pauses in hidden tabs. The melody is an arrangement of the public-domain chorus synthesized live: a
+- **`festive.js`** builds the string of lights and drives the snowflakes, the snow canvas and the Web Audio
+  melody. Each bulb gets its own rhythm and a few flicker; the lights button stops them (WCAG 2.2.2) and
+  reduced motion leaves them steadily lit. Snowflakes fly from a mouse pointer over the artwork (a touch makes
+  a small burst) in a fixed layer that cannot widen the page, each living under two and a half seconds. Snow
+  and the melody start only from their toggle buttons (`aria-pressed`), and snow is drawn once and kept still
+  under reduced motion and pauses in hidden tabs. The melody is an arrangement of the public-domain chorus synthesized live: a
   celesta of slightly stretched partials with a hammer tick, an alternating bass and off-beat chords on the
   chorus's usual changes, sleigh bells, a generated stereo room, a few milliseconds of human timing and a
   closing ritardando. One function schedules it for both the speakers and the offline render the tests
   measure (in tune, no clipping, rings out within its length).
+- **`pharmacy-details.js`** holds manually checked sources for a few pharmacies. A check applies only while
+  the mapped name, position and hours still match it, and vouches for the hours for ninety days; after that
+  only the link remains. A nameless, unannotated point within 10 m of a named pharmacy is shown as a possible
+  duplicate rather than dropped.
+
+## Pharmacy radar
+
+The radar is loaded on first use. `radar-view.js` first explains what it uses and asks for nothing; the
+**Start radar** click requests compass access (Safari shows that prompt only inside a click) and starts
+`radar-session.js`, which owns a high-accuracy location watch, the orientation listeners and a screen wake
+lock.
+
+- **Lifetime.** Closing the radar, a new search, a language change or leaving the page releases all of it.
+  While the page is hidden the watch is cleared and the wake lock released; a denied location ends the session
+  for good, so the browser never asks again.
+- **Honesty.** A fix older than 15 s is stale and gives no direction. When the pharmacy is within the GPS
+  uncertainty, no direction or needle is shown. "Near" needs both distance and accuracy within 30 m (40 m to
+  stay near) and survives a stale fix, because someone waiting at the door gets no new fixes. If even the
+  nearest result is over 5 km away, the radar says the results were searched for somewhere else.
+- **Direction.** The compass is used when allowed; otherwise the device's course while moving with a good
+  fix, otherwise two fixes far enough apart; otherwise the chart is north-up and directions are cardinal.
+  With reduced motion the chart always stays north-up, and the words still say where to turn.
+- **Cost.** Compass events can arrive sixty times a second; the view redraws at most once per animation
+  frame, and the pharmacy chooser keeps the search order so live updates never rebuild an open picker.
+- **Accessibility.** The chart is hidden from assistive technology; a status line and a throttled live
+  region carry the same information. Forced colours draw the target in `Highlight`.
+- **Permissions.** `vercel.json` names `accelerometer`, `gyroscope` and `magnetometer` for this origin only,
+  which is the browsers' default made explicit.
+
+`createRadarSession` takes its browser (`document`, `window`, the wake lock and timers) as a parameter, so its
+states are unit-tested: live and stale, pause and resume, denial staying final, cleanup on close, and the
+compass permission.
 
 ## Visual layer
 

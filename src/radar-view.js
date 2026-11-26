@@ -1,118 +1,21 @@
-import { mapsUrl } from './core.js';
-import { bearing, isNear, radarPoint, radarRange, rankedTargets, degrees } from './radar-geometry.js';
-import { createRadarSession } from './radar-session.js';
-
-const copy = {
-  en: {
-    title: 'Pharmacy radar',
-    close: 'Close radar',
-    target: 'Choose pharmacy',
-    locating: 'Finding your live location…',
-    stale: 'Waiting for a new GPS fix…',
-    paused: 'Radar paused',
-    denied: 'Location unavailable or denied.',
-    unavailable: 'Waiting for GPS signal…',
-    active: 'Live GPS',
-    compass: 'Compass-up',
-    motion: 'Direction of travel',
-    north: 'North-up',
-    accuracy: 'GPS accuracy',
-    scale: 'Range',
-    near: 'Near the mapped pharmacy. Look for its entrance.',
-    uncertain: 'The pharmacy is within GPS uncertainty.',
-    offscale: 'Target is outside the displayed range.',
-    disclaimer:
-      'Straight-line direction only, not a walking route. Live location stays on this device while the radar is open.',
-    map: 'Open in OpenStreetMap',
-    unnamed: 'Pharmacy — name unavailable',
-    directions: ['North', 'North-east', 'East', 'South-east', 'South', 'South-west', 'West', 'North-west'],
-    relative: [
-      'Ahead',
-      'Slightly right',
-      'Right',
-      'Behind right',
-      'Behind',
-      'Behind left',
-      'Left',
-      'Slightly left',
-    ],
-  },
-  fi: {
-    title: 'Apteekkitutka',
-    close: 'Sulje tutka',
-    target: 'Valitse apteekki',
-    locating: 'Haetaan sijaintia…',
-    stale: 'Odotetaan uutta GPS-sijaintia…',
-    paused: 'Tutka tauolla',
-    denied: 'Sijainti ei ole saatavilla tai lupaa ei annettu.',
-    unavailable: 'Odotetaan GPS-signaalia…',
-    active: 'GPS käytössä',
-    compass: 'Kompassisuunta',
-    motion: 'Kulkusuunta',
-    north: 'Pohjoinen ylhäällä',
-    accuracy: 'GPS-tarkkuus',
-    scale: 'Kantama',
-    near: 'Olet lähellä kartan apteekkia. Etsi sisäänkäynti.',
-    uncertain: 'Apteekki on GPS-epävarmuusalueella.',
-    offscale: 'Kohde on tutkan kantaman ulkopuolella.',
-    disclaimer: 'Suunta linnuntietä, ei kävelyreitti. Sijainti pysyy laitteellasi tutkan ollessa auki.',
-    map: 'Avaa OpenStreetMapissa',
-    unnamed: 'Apteekki — nimi puuttuu',
-    directions: ['Pohjoinen', 'Koillinen', 'Itä', 'Kaakko', 'Etelä', 'Lounas', 'Länsi', 'Luode'],
-    relative: [
-      'Suoraan',
-      'Hieman oikealle',
-      'Oikealle',
-      'Takaviistoon oikealle',
-      'Taakse',
-      'Takaviistoon vasemmalle',
-      'Vasemmalle',
-      'Hieman vasemmalle',
-    ],
-  },
-  sv: {
-    title: 'Apoteksradar',
-    close: 'Stäng radarn',
-    target: 'Välj apotek',
-    locating: 'Hämtar din position…',
-    stale: 'Väntar på en ny GPS-position…',
-    paused: 'Radarn pausad',
-    denied: 'Positionen är otillgänglig eller nekad.',
-    unavailable: 'Väntar på GPS-signal…',
-    active: 'GPS aktiv',
-    compass: 'Kompassriktning',
-    motion: 'Färdriktning',
-    north: 'Norr uppåt',
-    accuracy: 'GPS-noggrannhet',
-    scale: 'Räckvidd',
-    near: 'Du är nära det kartlagda apoteket. Leta efter ingången.',
-    uncertain: 'Apoteket ligger inom GPS-osäkerheten.',
-    offscale: 'Målet ligger utanför radarns räckvidd.',
-    disclaimer:
-      'Riktning fågelvägen, inte en gångväg. Din position stannar på enheten medan radarn är öppen.',
-    map: 'Öppna i OpenStreetMap',
-    unnamed: 'Apotek — namn saknas',
-    directions: ['Norr', 'Nordost', 'Öster', 'Sydost', 'Söder', 'Sydväst', 'Väster', 'Nordväst'],
-    relative: [
-      'Rakt fram',
-      'Lite åt höger',
-      'Höger',
-      'Snett bakåt höger',
-      'Bakåt',
-      'Snett bakåt vänster',
-      'Vänster',
-      'Lite åt vänster',
-    ],
-  },
-};
+import { formatDistance, mapsUrl } from './core.js';
+import { bearing, degrees, isNear, radarPoint, radarRange, rankedTargets } from './radar-geometry.js';
+import { createRadarSession, requestCompass } from './radar-session.js';
 
 const svgNS = 'http://www.w3.org/2000/svg';
-function node(tag, text, parent) {
+// When even the nearest result is this far away, the results were searched for somewhere else.
+const farAway = 5000;
+// A direction that merely wobbles is re-announced at most this often.
+const announceEvery = 8000;
+
+function node(tag, text, parent, className) {
   const item = document.createElement(tag);
   item.textContent = text;
+  if (className) item.className = className;
   parent?.append(item);
   return item;
 }
+
 function shape(tag, attrs, parent) {
   const item = document.createElementNS(svgNS, tag);
   for (const [key, value] of Object.entries(attrs)) item.setAttribute(key, String(value));
@@ -120,80 +23,95 @@ function shape(tag, attrs, parent) {
   return item;
 }
 
-export function openRadar({ container, pharmacies, targetId, language, compass, onClose }) {
-  const t = copy[language] ?? copy.en;
+/**
+ * The radar panel. It explains itself first and asks for location and compass only when the visitor starts
+ * it. `text` is the language's `radarView` copy from strings.js.
+ */
+export function openRadar({
+  container,
+  pharmacies,
+  targetId,
+  language,
+  text: t,
+  unnamed,
+  mapLabel,
+  reducedMotion,
+  onClose,
+}) {
+  const label = pharmacy =>
+    pharmacy.name || (pharmacy.address ? `${unnamed} (${pharmacy.address})` : unnamed);
+  const format = meters => formatDistance(meters, language);
   let selected = pharmacies.find(p => p.id === targetId) ?? pharmacies[0];
   let scale = null;
   let near = false;
-  let snapshot;
-  let lastSpoken = null;
-  const panel = node('section', '', container);
-  panel.className = 'radar-panel';
+  let snapshot = null;
+  let pending = null;
+  let frame = 0;
+  let spoken = null;
+  let session = null;
+
+  const panel = node('section', '', container, 'radar-panel');
   panel.setAttribute('aria-labelledby', 'radar-title');
-  const header = node('div', '', panel);
-  header.className = 'result-header';
+  const header = node('div', '', panel, 'result-header');
   const title = node('h3', t.title, header);
   title.id = 'radar-title';
   title.tabIndex = -1;
-  const close = node('button', t.close, header);
+  const close = node('button', t.close, header, 'text-button');
   close.type = 'button';
-  close.className = 'text-button';
   close.addEventListener('click', onClose);
-  const status = node('p', t.locating, panel);
+
+  const intro = node('p', t.intro, panel, 'radar-intro');
+  const start = node('button', t.start, panel, 'secondary radar-start');
+  start.type = 'button';
+
+  const live = node('div', '', panel, 'radar-live');
+  live.hidden = true;
+  const status = node('p', '', live);
   status.setAttribute('role', 'status');
-  const meta = node('p', '', panel);
-  meta.className = 'radar-meta';
-  const chart = shape('svg', { viewBox: '0 0 100 100', 'aria-hidden': 'true', class: 'radar-chart' }, panel);
-  const readout = node('div', '', panel);
-  readout.className = 'radar-readout';
-  const name = node('strong', selected.name || t.unnamed, readout);
-  const address = node('p', selected.address, readout);
+  const meta = node('p', '', live, 'radar-meta');
+  const chart = shape('svg', { viewBox: '0 0 100 100', 'aria-hidden': 'true', class: 'radar-chart' }, live);
+  chart.setAttribute('hidden', '');
+  const readout = node('div', '', live, 'radar-readout');
+  const name = node('strong', '', readout);
+  const address = node('p', '', readout);
   const detail = node('p', '', readout);
   const note = node('p', '', readout);
-  const link = node('a', t.map, readout);
+  const link = node('a', mapLabel, readout);
   link.rel = 'noreferrer';
-  link.href = mapsUrl(selected);
-  const label = node('label', t.target, panel);
-  label.htmlFor = 'radar-target';
-  const chooser = node('select', '', panel);
+  const chooserLabel = node('label', t.target, live);
+  chooserLabel.htmlFor = 'radar-target';
+  const chooser = node('select', '', live);
   chooser.id = 'radar-target';
-  const live = node('p', '', panel);
-  live.className = 'radar-sr-only';
-  live.setAttribute('role', 'status');
-  const disclaimer = node('p', t.disclaimer, panel);
-  disclaimer.className = 'radar-meta';
+  const announcer = node('p', '', live, 'radar-sr-only');
+  announcer.setAttribute('role', 'status');
+  node('p', t.disclaimer, live, 'radar-meta');
 
-  function options(candidates) {
-    const ids = candidates.map(p => p.id).join('|');
-    if (chooser.dataset.ids !== ids) {
-      chooser.replaceChildren();
-      candidates.forEach(p => {
-        const option = node('option', p.name || t.unnamed, chooser);
-        option.value = p.id;
-      });
-      chooser.dataset.ids = ids;
-    }
-    chooser.value = selected.id;
+  // The choices keep the search's order, so live GPS updates never rebuild an open picker. Entries that read
+  // the same (unnamed pharmacies at one address) are numbered.
+  const firstEight = pharmacies.slice(0, 8);
+  const choices = firstEight.some(p => p.id === selected.id) ? firstEight : [...firstEight, selected];
+  const seen = new Map();
+  for (const pharmacy of choices) {
+    const text = label(pharmacy);
+    const count = (seen.get(text) ?? 0) + 1;
+    seen.set(text, count);
+    node('option', count > 1 ? `${text} (${count})` : text, chooser).value = pharmacy.id;
   }
-  options(
-    pharmacies.slice(0, 8).some(p => p.id === selected.id)
-      ? pharmacies.slice(0, 8)
-      : [...pharmacies.slice(0, 8), selected],
-  );
-  const format = meters =>
-    new Intl.NumberFormat(language, {
-      style: 'unit',
-      unit: meters < 1000 ? 'meter' : 'kilometer',
-      maximumFractionDigits: meters < 1000 ? 0 : 1,
-    }).format(meters < 1000 ? meters : meters / 1000);
+  chooser.value = selected.id;
+
+  function showSelected() {
+    name.textContent = label(selected);
+    address.textContent = selected.name ? selected.address : '';
+    link.href = mapsUrl(selected);
+    link.setAttribute('aria-label', `${mapLabel}: ${label(selected)}`);
+  }
+  showSelected();
+
   function render(next) {
     snapshot = next;
     if (status.textContent !== t[next.status]) status.textContent = t[next.status];
-    name.textContent = selected.name || t.unnamed;
-    address.textContent = selected.address;
-    link.href = mapsUrl(selected);
     chart.replaceChildren();
-    chart.hidden = !next.position;
+    chart.toggleAttribute('hidden', !next.position);
     if (!next.position) {
       meta.textContent = '';
       detail.textContent = '';
@@ -201,97 +119,128 @@ export function openRadar({ container, pharmacies, targetId, language, compass, 
       return;
     }
     const candidates = rankedTargets(pharmacies, next.position, selected.id);
-    options(candidates);
     const target = candidates.find(p => p.id === selected.id);
     if (!target) return;
+    const { accuracy } = next.position;
+    const fresh = next.status === 'active';
     scale = radarRange(target.distance, scale);
-    near = next.status === 'active' && isNear(target.distance, next.position.accuracy, near);
+    // A merely stale fix still counts for "near": someone waiting at the door gets no new fixes.
+    near = (fresh || next.status === 'stale') && isNear(target.distance, accuracy, near);
+    // Inside the GPS uncertainty a direction would be noise, so none is given.
+    const uncertain = !near && target.distance <= accuracy;
     const azimuth = bearing(next.position, target);
     const relative = degrees(azimuth === null ? null : azimuth - (next.heading ?? 0));
     const guidance =
-      azimuth === null
+      azimuth === null || uncertain
         ? ''
         : next.mode === 'north'
           ? t.directions[Math.round(azimuth / 45) % 8]
           : t.relative[Math.round(relative / 45) % 8];
+    // With reduced motion the chart stays north-up; the words still say where to turn.
+    const chartHeading = reducedMotion.matches ? 0 : next.heading;
     meta.textContent = [
-      t[next.mode],
-      t.accuracy + ' ±' + format(next.position.accuracy),
-      t.scale + ' ' + format(scale),
+      t[reducedMotion.matches ? 'north' : next.mode],
+      `${t.accuracy} ±${format(accuracy)}`,
+      `${t.scale} ${format(scale)}`,
     ].join(' · ');
-    const fresh = next.status === 'active';
-    detail.textContent = format(target.distance) + (fresh && !near && guidance ? ' · ' + guidance : '');
+    detail.textContent = format(target.distance) + (fresh && !near && guidance ? ` · ${guidance}` : '');
     note.textContent = near
       ? t.near
-      : fresh && target.distance <= next.position.accuracy
+      : uncertain
         ? t.uncertain
-        : target.distance > scale
-          ? t.offscale
-          : '';
+        : candidates[0].distance > farAway
+          ? t.farResults
+          : target.distance > scale
+            ? t.offscale
+            : '';
+    announce(target, guidance, fresh);
+    draw(next, target, candidates, chartHeading, fresh && !near && !uncertain);
+  }
+
+  // Screen readers hear the distance and direction when something meaningful changes, not on every fix.
+  function announce(target, guidance, fresh) {
+    if (!fresh) return;
     const now = Date.now();
-    if (
-      fresh &&
-      (!lastSpoken ||
-        lastSpoken.id !== selected.id ||
-        lastSpoken.near !== near ||
-        Math.abs(target.distance - lastSpoken.distance) >= Math.max(10, lastSpoken.distance / 4) ||
-        (lastSpoken.guidance !== guidance && now - lastSpoken.at >= 8000))
-    ) {
-      live.textContent = detail.textContent + (near ? '. ' + t.near : '');
-      lastSpoken = { id: selected.id, near, distance: target.distance, guidance, at: now };
-    }
+    const changed =
+      !spoken ||
+      spoken.id !== selected.id ||
+      spoken.note !== note.textContent ||
+      Math.abs(target.distance - spoken.distance) >= Math.max(10, spoken.distance / 4) ||
+      (spoken.guidance !== guidance && now - spoken.at >= announceEvery);
+    if (!changed) return;
+    announcer.textContent = [detail.textContent, note.textContent].filter(Boolean).join('. ');
+    spoken = { id: selected.id, note: note.textContent, distance: target.distance, guidance, at: now };
+  }
+
+  function draw(next, target, candidates, heading, needle) {
     for (const r of [10.25, 20.5, 30.75, 41])
       shape('circle', { cx: 50, cy: 50, r, class: 'radar-ring' }, chart);
     shape('path', { d: 'M9 50H91M50 9V91', class: 'radar-axis' }, chart);
-    const north = radarPoint(0, next.heading, scale, scale);
-    const northLabel = shape('text', { x: north.x, y: north.y - 2, class: 'radar-north' }, chart);
-    northLabel.textContent = 'N';
-    shape(
-      'circle',
-      { cx: 50, cy: 50, r: Math.min(41, (next.position.accuracy / scale) * 41), class: 'radar-accuracy' },
-      chart,
-    );
+    const north = radarPoint(0, heading, scale, scale);
+    shape('text', { x: north.x, y: north.y - 2, class: 'radar-north' }, chart).textContent = t.northLetter;
+    const accuracyRadius = Math.min(41, (next.position.accuracy / scale) * 41);
+    shape('circle', { cx: 50, cy: 50, r: accuracyRadius, class: 'radar-accuracy' }, chart);
     const drawn = [];
-    const ordered = [target, ...candidates.filter(p => p.id !== target.id)];
-    for (const p of ordered) {
-      const active = p.id === target.id;
-      if (!active && p.distance > scale) continue;
-      const b = bearing(next.position, p);
-      const point = b === null ? { x: 50, y: 50 } : radarPoint(b, next.heading, p.distance, scale);
-      if (
-        !point ||
-        (!active &&
-          (Math.hypot(point.x - 50, point.y - 50) < 8 ||
-            drawn.some(q => Math.hypot(point.x - q.x, point.y - q.y) < 10)))
-      )
-        continue;
+    for (const pharmacy of [target, ...candidates.filter(p => p.id !== target.id)]) {
+      const active = pharmacy === target;
+      if (!active && pharmacy.distance > scale) continue;
+      const direction = bearing(next.position, pharmacy);
+      const point =
+        direction === null ? { x: 50, y: 50 } : radarPoint(direction, heading, pharmacy.distance, scale);
+      if (!point) continue;
+      const crowded =
+        Math.hypot(point.x - 50, point.y - 50) < 8 ||
+        drawn.some(other => Math.hypot(point.x - other.x, point.y - other.y) < 10);
+      if (!active && crowded) continue;
       drawn.push(point);
-      if (active && fresh && !near && Math.hypot(point.x - 50, point.y - 50) > 6)
+      if (active && needle && Math.hypot(point.x - 50, point.y - 50) > 6) {
         shape('line', { x1: 50, y1: 50, x2: point.x, y2: point.y, class: 'radar-needle' }, chart);
-      shape(
-        'circle',
-        { cx: point.x, cy: point.y, r: active ? 5 : 3.5, class: active ? 'radar-target' : 'radar-marker' },
-        chart,
-      );
-      shape(
-        'path',
-        { d: 'M' + (point.x - 1.6) + ' ' + point.y + 'h3.2m-1.6 -1.6v3.2', class: 'radar-cross' },
-        chart,
-      );
+      }
+      // A target beyond the range sits on the edge as a ring, so it never looks closer than it is.
+      const className = active
+        ? point.clipped
+          ? 'radar-target radar-edge'
+          : 'radar-target'
+        : 'radar-marker';
+      shape('circle', { cx: point.x, cy: point.y, r: active ? 5 : 3.5, class: className }, chart);
+      shape('path', { d: `M${point.x - 1.6} ${point.y}h3.2m-1.6 -1.6v3.2`, class: 'radar-cross' }, chart);
     }
     shape('circle', { cx: 50, cy: 50, r: 2, class: 'radar-user' }, chart);
   }
+
+  // Compass events arrive up to sixty times a second; the panel redraws at most once per frame.
+  function schedule(next) {
+    pending = next;
+    frame ||= requestAnimationFrame(() => {
+      frame = 0;
+      render(pending);
+    });
+  }
+
   chooser.addEventListener('change', () => {
     selected = pharmacies.find(p => p.id === chooser.value) ?? selected;
     scale = null;
     near = false;
+    showSelected();
     if (snapshot) render(snapshot);
   });
-  const session = createRadarSession({ onChange: render, compass });
+
+  start.addEventListener('click', () => {
+    // Safari shows its compass prompt only inside this click, so that request comes before anything else.
+    const compass = requestCompass();
+    intro.hidden = true;
+    start.remove();
+    live.hidden = false;
+    status.textContent = t.locating;
+    session = createRadarSession({ onChange: schedule, compass });
+    title.focus();
+  });
+
   title.focus();
   return {
     close() {
-      session.close();
+      cancelAnimationFrame(frame);
+      session?.close();
       panel.remove();
     },
   };

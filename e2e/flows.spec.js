@@ -104,12 +104,11 @@ test('missing or unverified hours never become an open-now claim', async ({ page
   );
   await page.goto('/');
   await page.locator('#search-label').click();
-  await expect(page.locator('#list li').first()).toContainText('Opening hours');
+  // Every row says its mapped hours are unverified; the shared notice says where they come from.
+  await expect(page.locator('#list li').first()).toContainText('Mapped hours (unverified)');
   await expect(page.locator('#list li').last()).toContainText('Opening hours unavailable');
-  await expect(page.locator('#hours-disclosure')).toContainText('OpenStreetMap');
-  await expect(
-    page.locator('#list li').last().getByRole('link', { name: 'Check opening hours' }),
-  ).toBeVisible();
+  await expect(page.locator('#hours-disclosure')).toContainText('unverified');
+  await expect(page.getByRole('link', { name: 'Check opening hours: Far pharmacy' })).toBeVisible();
 });
 test('capture desktop and mobile screenshots with synthetic results', async ({ page }, testInfo) => {
   await page.route(endpoint, r => fulfill(r, fixture));
@@ -551,7 +550,7 @@ test.describe("today's opening hours", () => {
       await page.goto('/');
       await page.locator('#search-label').click();
       await expect(page.locator('.hours-rule.today')).toHaveText(marked);
-      await expect(page.locator('#list li').first()).toContainText('Opening hours');
+      await expect(page.locator('#list li').first()).toContainText('Mapped hours (unverified)');
     });
   }
 
@@ -608,7 +607,7 @@ test('the results read as a structured list to assistive technology', async ({ p
           - paragraph: Closest mapped result
           - heading "Near pharmacy" [level=3]
           - paragraph: Example street
-          - paragraph: Opening hours Mon–Fri 09:00–18:00 today · Sat 10:00–14:00 · Public holidays closed
+          - paragraph: Mapped hours (unverified) Mon–Fri 09:00–18:00 today · Sat 10:00–14:00 · Public holidays closed
           - text: 31 m
           - 'button "Map preview: Near pharmacy"'
           - 'link "Open in OpenStreetMap: Near pharmacy"'
@@ -616,7 +615,7 @@ test('the results read as a structured list to assistive technology', async ({ p
           - heading "Far pharmacy" [level=3]
           - paragraph: Address not listed
           - paragraph: Opening hours unavailable
-          - link "Check opening hours"
+          - 'link "Check opening hours: Far pharmacy"'
           - text: 2.2 km
           - 'button "Map preview: Far pharmacy"'
           - 'link "Open in OpenStreetMap: Far pharmacy"'

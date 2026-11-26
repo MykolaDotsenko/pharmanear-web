@@ -98,6 +98,24 @@ export async function search(origin, fetcher, signal) {
   return { results, radius: radii.at(-1), covered: false };
 }
 
+const distanceFormats = new Map();
+/** A straight-line distance in metres below one kilometre and in kilometres above, in the given language. */
+export function formatDistance(meters, language) {
+  const short = meters < 1000;
+  const key = `${language}|${short}`;
+  if (!distanceFormats.has(key)) {
+    distanceFormats.set(
+      key,
+      new Intl.NumberFormat(language, {
+        style: 'unit',
+        unit: short ? 'meter' : 'kilometer',
+        maximumFractionDigits: short ? 0 : 1,
+      }),
+    );
+  }
+  return distanceFormats.get(key).format(short ? meters : meters / 1000);
+}
+
 export function mapsUrl(point) {
   if (!validPoint(point)) throw new RangeError('Invalid map point');
   const url = new URL('https://www.openstreetmap.org/');

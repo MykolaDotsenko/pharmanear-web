@@ -1,4 +1,4 @@
-import { mapsUrl, embedUrl } from './core.js';
+import { embedUrl, formatDistance, mapsUrl } from './core.js';
 import { reviewedDetails, possibleDuplicate } from './pharmacy-details.js';
 import { messages, preferredLanguage } from './strings.js';
 import { createSearchController } from './search-controller.js';
@@ -8,7 +8,6 @@ import { finnishToday } from './holidays.js';
 import { setUpSeason } from './festive.js';
 import { setUpTheme } from './theme.js';
 import { setUpEffects, transition } from './effects.js';
-import { requestCompass } from './radar-session.js';
 
 const $ = id => document.getElementById(id);
 const root = document.documentElement;
@@ -81,6 +80,7 @@ function labelIconButtons() {
     ['theme-toggle', 'theme'],
     ['snow-toggle', 'snow'],
     ['melody-toggle', 'melody'],
+    ['lights-toggle', 'lights'],
   ]) {
     $(id).setAttribute('aria-label', tr(key));
     $(id).title = tr(key);
@@ -199,7 +199,6 @@ async function showRadar() {
     closeRadar(true);
     return;
   }
-  const compass = requestCompass();
   closeMap();
   const generation = ++radarGeneration;
   $('open-radar').setAttribute('aria-expanded', 'true');
@@ -213,7 +212,10 @@ async function showRadar() {
       pharmacies: state.result.results,
       targetId: state.result.results[0].id,
       language: lang,
-      compass,
+      text: tr('radarView'),
+      unnamed: tr('unnamed'),
+      mapLabel: tr('map'),
+      reducedMotion,
       onClose: () => closeRadar(true),
     });
   } catch {
@@ -230,20 +232,11 @@ function element(tag, className, text) {
   return node;
 }
 
-function distanceText(meters) {
-  const short = meters < 1000;
-  return new Intl.NumberFormat(lang, {
-    style: 'unit',
-    unit: short ? 'meter' : 'kilometer',
-    maximumFractionDigits: short ? 0 : 1,
-  }).format(short ? meters : meters / 1000);
-}
-
 /**
  * Localized rules when the mapped value is simple enough, with today's rule marked; otherwise the mapped
  * rules as they are. Nothing says whether the pharmacy is open: the hours are unverified.
  */
-function hoursLine(pharmacy, today) {
+function hoursLine(pharmacy, today, checked) {
   const hours = element('p', 'hours');
   if (!pharmacy.hours) {
     hours.textContent = tr('missingHours');
@@ -267,7 +260,8 @@ function hoursLine(pharmacy, today) {
     value.append(item);
     if (!last) value.append(' ');
   });
-  hours.append(element('span', 'hours-label', tr('hours')), value);
+  // Only hours that match a recently checked source drop the "unverified" qualifier.
+  hours.append(element('span', 'hours-label', tr(checked ? 'hoursChecked' : 'hours')), value);
   return hours;
 }
 
@@ -294,20 +288,24 @@ function pharmacyRow(pharmacy, index, entrance, today, results) {
     const message = possibleDuplicate(pharmacy, results) ? tr('possibleDuplicate') : tr('incompleteEntry');
     info.append(element('p', 'missing-detail', message));
   }
-  info.append(hoursLine(pharmacy, today));
+  info.append(hoursLine(pharmacy, today, review?.checked));
+  // Each row repeats these links, so their accessible names carry the pharmacy's name.
+  const sourceLink = (text, href) => {
+    const source = element('a', 'hours-source', text);
+    source.href = href;
+    source.rel = 'noreferrer';
+    source.setAttribute('aria-label', `${text}: ${name}`);
+    info.append(source);
+  };
   if (review) {
     const date =
       review.checked &&
-      new Intl.DateTimeFormat(lang, { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date(review.checked));
-    const source = element('a', 'hours-source', date ? tr('sourceChecked') + ' ' + date : tr('sourceLink'));
-    source.href = review.url;
-    source.rel = 'noreferrer';
-    info.append(source);
+      new Intl.DateTimeFormat(lang, { dateStyle: 'medium', timeZone: 'UTC' }).format(
+        new Date(review.checked),
+      );
+    sourceLink(date ? `${tr('sourceChecked')} ${date}` : tr('sourceLink'), review.url);
   } else if (!pharmacy.hours) {
-    const source = element('a', 'hours-source', tr('checkHours'));
-    source.href = 'https://www.apteekki.fi/apteekkihaku';
-    source.rel = 'noreferrer';
-    info.append(source);
+    sourceLink(tr('checkHours'), 'https://www.apteekki.fi/apteekkihaku');
   }
 
   const preview = element('button', 'map-preview', tr('mapHere'));
@@ -324,7 +322,7 @@ function pharmacyRow(pharmacy, index, entrance, today, results) {
 
   const action = element('div', 'pharmacy-action');
   action.append(preview, link);
-  row.append(rank, info, element('span', 'distance', distanceText(pharmacy.distance)), action);
+  row.append(rank, info, element('span', 'distance', formatDistance(pharmacy.distance, lang)), action);
   return row;
 }
 
@@ -407,10 +405,12 @@ setUpTheme({ toggle: $('theme-toggle'), reducedMotion });
 if (root.dataset.season === 'christmas') {
   setUpSeason({
     garland: $('garland'),
+    lightsButton: $('lights-toggle'),
     snowButton: $('snow-toggle'),
     melodyButton: $('melody-toggle'),
     canvas: $('snowfall'),
-    reducedMotion: reducedMotion.matches,
+    art: document.querySelector('.landscape'),
+    reducedMotion,
   });
 }
 setUpEffects({ list: $('list'), hero: document.querySelector('.hero'), reducedMotion });

@@ -6,7 +6,7 @@
 const svgNS = 'http://www.w3.org/2000/svg';
 
 /** A string of lights along the header rule: one scallop per bulb, so bulbs hang at the low points. */
-export function buildGarland(container, bulbs = 18) {
+export function buildGarland(container, bulbs = 18, random = Math.random) {
   const wire = document.createElementNS(svgNS, 'svg');
   wire.setAttribute('viewBox', `0 0 ${bulbs * 40} 14`);
   wire.setAttribute('preserveAspectRatio', 'none');
@@ -18,10 +18,18 @@ export function buildGarland(container, bulbs = 18) {
   path.setAttribute('vector-effect', 'non-scaling-stroke');
   wire.append(path);
 
+  // Real strings of lights drift apart, so each bulb gets its own rhythm, and every fifth one flickers.
   const lights = document.createElement('div');
   lights.className = 'garland-bulbs';
-  for (let index = 0; index < bulbs; index++) lights.append(document.createElement('i'));
+  for (let index = 0; index < bulbs; index++) {
+    const bulb = document.createElement('i');
+    bulb.style.setProperty('--dur', `${(2.2 + random() * 2.6).toFixed(2)}s`);
+    bulb.style.setProperty('--delay', `${(-random() * 4).toFixed(2)}s`);
+    if (index % 5 === 3) bulb.classList.add('flicker');
+    lights.append(bulb);
+  }
   container.replaceChildren(wire, lights);
+  container.dataset.lights = 'on';
 }
 
 /**
@@ -368,13 +376,109 @@ export function createMelody({ onEnd = () => {} } = {}) {
   };
 }
 
+const flakeShape =
+  'M12 2v20M3.3 7l17.4 10M3.3 17 20.7 7M9.5 3.5 12 6l2.5-2.5M9.5 20.5 12 18l2.5 2.5M3.6 10.6 7 9.7 6 6.4M20.4 13.4 17 14.3l1 3.3M3.6 13.4l3.4.9-1 3.3M20.4 10.6l-3.4-.9 1-3.3';
+const sparkleShape = 'M12 2.5 13.6 10.4 21.5 12 13.6 13.6 12 21.5 10.4 13.6 2.5 12 10.4 10.4Z';
+// Enough flakes to feel generous, few enough that a fast mouse never floods the page.
+const maximumFlakes = 30;
+const flakeInterval = 50;
+
 /**
- * Wires the seasonal extras to their toggle buttons: the lights are drawn at once, snow and the melody start
- * only when pressed, and each button's aria-pressed says whether its extra is on.
+ * Snowflakes, with the odd golden sparkle, fly out from the pointer over `art`: up and away, turning, then
+ * drifting down as they fade. A touch makes a small burst. They live in a fixed layer that never widens the
+ * page, last under two and a half seconds, and never appear with reduced motion.
  */
-export function setUpSeason({ garland, snowButton, melodyButton, canvas, reducedMotion }) {
+export function setUpFlakes(art, { reducedMotion, random = Math.random }) {
+  let layer = null;
+  let alive = 0;
+  let last = 0;
+
+  function spawn(x, y) {
+    if (alive >= maximumFlakes) return;
+    if (!layer?.isConnected) {
+      layer = document.createElement('div');
+      layer.className = 'flake-layer';
+      layer.setAttribute('aria-hidden', 'true');
+      document.body.append(layer);
+    }
+    const sparkle = random() < 0.25;
+    const size = sparkle ? 11 + random() * 8 : 16 + random() * 16;
+    const flake = document.createElementNS(svgNS, 'svg');
+    flake.setAttribute('viewBox', '0 0 24 24');
+    flake.classList.add('flake');
+    if (sparkle) flake.classList.add('sparkle');
+    flake.style.setProperty('--size', `${size.toFixed(1)}px`);
+    const path = document.createElementNS(svgNS, 'path');
+    path.setAttribute('d', sparkle ? sparkleShape : flakeShape);
+    if (sparkle) path.setAttribute('fill', 'currentColor');
+    else {
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', 'currentColor');
+      path.setAttribute('stroke-width', '1.7');
+      path.setAttribute('stroke-linecap', 'round');
+      path.setAttribute('stroke-linejoin', 'round');
+    }
+    flake.append(path);
+    layer.append(flake);
+    alive++;
+
+    const angle = random() * Math.PI * 2;
+    const reach = 28 + random() * 52;
+    const away = Math.cos(angle) * reach;
+    const rise = -(18 + random() * 36);
+    const fall = 46 + random() * 40;
+    const drift = (random() - 0.5) * 40;
+    const spin = (random() < 0.5 ? -1 : 1) * (120 + random() * 200);
+    const from = `translate(${x - size / 2}px, ${y - size / 2}px)`;
+    const flight = flake.animate(
+      [
+        { transform: `${from} scale(0.2) rotate(0deg)`, opacity: 0 },
+        {
+          transform: `${from} translate(${away * 0.55}px, ${rise}px) scale(1) rotate(${spin * 0.35}deg)`,
+          opacity: 1,
+          offset: 0.3,
+        },
+        {
+          transform: `${from} translate(${away + drift}px, ${rise + fall}px) scale(0.55) rotate(${spin}deg)`,
+          opacity: 0,
+        },
+      ],
+      { duration: 1500 + random() * 900, easing: 'cubic-bezier(0.22, 0.61, 0.36, 1)' },
+    );
+    const done = () => {
+      flake.remove();
+      alive--;
+    };
+    flight.addEventListener('finish', done);
+    flight.addEventListener('cancel', done);
+  }
+
+  art.addEventListener('pointermove', event => {
+    if (event.pointerType !== 'mouse' || reducedMotion.matches) return;
+    if (event.timeStamp - last < flakeInterval) return;
+    last = event.timeStamp;
+    spawn(event.clientX, event.clientY);
+  });
+  art.addEventListener('pointerdown', event => {
+    if (event.pointerType === 'mouse' || reducedMotion.matches) return;
+    for (let count = 0; count < 7; count++) spawn(event.clientX, event.clientY);
+  });
+}
+
+/**
+ * Wires the seasonal extras to their toggle buttons. The lights glow at once and their button switches them
+ * off; snow and the melody start only when pressed; each button's aria-pressed says whether its extra is on.
+ * `reducedMotion` is the media query list, read whenever motion would start.
+ */
+export function setUpSeason({ garland, lightsButton, snowButton, melodyButton, canvas, art, reducedMotion }) {
   buildGarland(garland);
-  const snow = createSnowfall(canvas, { reducedMotion });
+  lightsButton.addEventListener('click', () => {
+    const on = garland.dataset.lights !== 'on';
+    garland.dataset.lights = on ? 'on' : 'off';
+    lightsButton.setAttribute('aria-pressed', String(on));
+  });
+  setUpFlakes(art, { reducedMotion });
+  const snow = createSnowfall(canvas, { reducedMotion: reducedMotion.matches });
   const melody = createMelody({ onEnd: () => melodyButton.setAttribute('aria-pressed', 'false') });
 
   snowButton.addEventListener('click', () => {

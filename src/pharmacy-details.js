@@ -1,7 +1,9 @@
 import { distance } from './core.js';
 
 // Manually reviewed evidence, not a live opening-status feed. A changed OSM
-// identity, location or schedule must not inherit a previous verification.
+// identity, location or schedule must not inherit a previous verification,
+// and an old check stops vouching for the hours: schedules change.
+const checkValidDays = 90;
 const evidence = {
   'node/1369465698': {
     name: 'Yliopiston apteekki',
@@ -23,13 +25,19 @@ const evidence = {
   },
 };
 
-export function reviewedDetails(pharmacy) {
+/**
+ * The reviewed source for a pharmacy, or null. `checked` is the review date only while the mapped hours still
+ * match the reviewed ones and the review is younger than ninety days; otherwise only the link remains.
+ */
+export function reviewedDetails(pharmacy, now = Date.now()) {
   const entry = evidence[pharmacy.id];
   if (!entry || pharmacy.name !== entry.name || distance(pharmacy, entry) > 15) return null;
+  const age = now - Date.parse(entry.checked);
+  const current = age >= 0 && age <= checkValidDays * 86_400_000;
   return {
     address: pharmacy.address || entry.address,
     url: entry.url,
-    checked: pharmacy.hours === entry.hours ? entry.checked : null,
+    checked: pharmacy.hours === entry.hours && current ? entry.checked : null,
   };
 }
 

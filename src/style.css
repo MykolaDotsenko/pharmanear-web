@@ -978,24 +978,92 @@ body[data-outcome] h1 {
   display: flex;
   justify-content: space-around;
 }
+/* Glass bulbs on sockets, lit from inside: a bright core, the bulb's colour and a soft halo around it. */
 .garland-bulbs i {
+  --bulb: #c8324a;
+  --glow: #ff7088;
+  position: relative;
   width: 8px;
   height: 12px;
   border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
-  background: var(--accent);
-  animation: twinkle 2.6s ease-in-out 1;
+  background: radial-gradient(
+    circle at 38% 32%,
+    color-mix(in oklab, var(--glow) 35%, white) 0 16%,
+    var(--glow) 38%,
+    var(--bulb) 72%,
+    color-mix(in oklab, var(--bulb) 70%, black) 100%
+  );
 }
-.garland-bulbs i:nth-child(3n + 2) {
-  background: var(--gold);
-  animation-delay: 0.9s;
+.garland-bulbs i::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: 50%;
+  width: 5px;
+  height: 4px;
+  translate: -50% 0;
+  border-radius: 1px;
+  background: color-mix(in oklab, var(--ink) 65%, var(--gold));
 }
-.garland-bulbs i:nth-child(3n) {
-  background: var(--pine);
-  animation-delay: 1.7s;
+.garland-bulbs i::after {
+  content: '';
+  position: absolute;
+  inset: -9px -8px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(closest-side, color-mix(in oklab, var(--glow) 55%, transparent), transparent);
 }
-:root[data-theme='dark'] .garland-bulbs i {
-  box-shadow: 0 0 6px currentColor;
-  color: var(--gold);
+:root[data-theme='dark'] .garland-bulbs i::after {
+  inset: -12px -11px;
+  background: radial-gradient(closest-side, color-mix(in oklab, var(--glow) 80%, transparent), transparent);
+}
+.garland-bulbs i:nth-child(4n + 2) {
+  --bulb: #d99a2b;
+  --glow: #ffd27a;
+}
+.garland-bulbs i:nth-child(4n + 3) {
+  --bulb: #2e8b57;
+  --glow: #8affbd;
+}
+.garland-bulbs i:nth-child(4n) {
+  --bulb: #2f6fd1;
+  --glow: #9ccbff;
+}
+/* Switched on, every bulb glows on its own rhythm (festive.js sets --dur and --delay), and a few flicker the
+   way old bulbs do. The lights button stops them (WCAG 2.2.2); reduced motion leaves them steadily lit. */
+.garland[data-lights='on'] .garland-bulbs i {
+  animation: glow var(--dur, 3s) ease-in-out var(--delay, 0s) infinite;
+}
+.garland[data-lights='on'] .garland-bulbs i.flicker {
+  animation-name: flicker;
+}
+.garland[data-lights='off'] .garland-bulbs i {
+  filter: saturate(0.35) brightness(0.75);
+}
+.garland[data-lights='off'] .garland-bulbs i::after {
+  opacity: 0;
+}
+
+/* Snowflakes that fly from the pointer over the artwork (festive.js). Decorative and short-lived. */
+.flake-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  overflow: hidden;
+  pointer-events: none;
+}
+.flake {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--size);
+  height: var(--size);
+  color: #fff;
+  filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 6px #8fd3ff) drop-shadow(0 0 1px #4f86b8);
+}
+.flake.sparkle {
+  color: #fff1b8;
+  filter: drop-shadow(0 0 3px #ffd25e) drop-shadow(0 0 8px #ffb52e);
 }
 
 /* Winter details inside the artwork. */
@@ -1108,8 +1176,42 @@ body[data-outcome] h1 {
     rotate: 1turn;
   }
 }
-@keyframes twinkle {
-  50% {
+@keyframes glow {
+  0%,
+  100% {
+    opacity: 1;
+    filter: brightness(1.1) saturate(1.15);
+  }
+  40% {
+    opacity: 1;
+  }
+  55% {
+    opacity: 0.5;
+    filter: brightness(0.55) saturate(0.6);
+  }
+  72% {
+    opacity: 0.95;
+    filter: brightness(1) saturate(1);
+  }
+}
+@keyframes flicker {
+  0%,
+  20%,
+  60%,
+  80%,
+  100% {
+    opacity: 1;
+  }
+  8% {
+    opacity: 0.35;
+  }
+  12% {
+    opacity: 0.95;
+  }
+  16% {
+    opacity: 0.5;
+  }
+  70% {
     opacity: 0.45;
   }
 }
@@ -1433,6 +1535,7 @@ body::before {
     border: 1px solid CanvasText;
   }
   body::before,
+  .flake-layer,
   .hero::before,
   .pharmacy::before,
   .pharmacy.closest::after,
