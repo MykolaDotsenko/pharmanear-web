@@ -7,6 +7,7 @@ import { finnishToday } from './holidays.js';
 import { setUpSeason } from './festive.js';
 import { setUpTheme } from './theme.js';
 import { setUpEffects, transition } from './effects.js';
+import { requestCompass } from './radar-session.js';
 
 const $ = id => document.getElementById(id);
 const root = document.documentElement;
@@ -17,6 +18,8 @@ const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 let lang = preferredLanguage(navigator.languages);
 let expanded = false;
 let selected = null;
+let radar = null;
+let radarGeneration = 0;
 // The result set on screen and how many of its rows the visitor has already seen arrive.
 let shownResult = null;
 let shownCount = 0;
@@ -41,6 +44,7 @@ const controller = createSearchController({
     if (next.busy) {
       expanded = false;
       closeMap();
+      closeRadar();
     }
     const update = () => {
       render();
@@ -129,6 +133,8 @@ function renderControls() {
   $('retry').hidden = !state.canRetry || status === 'denied' || status === 'empty';
   $('result-details').hidden = !found;
   $('result-tools').hidden = !found;
+  $('open-radar').hidden = !found;
+  $('open-radar').textContent = tr('radar');
 
   const showAll = $('show-all');
   showAll.hidden = !found || result.results.length <= initialLimit;
@@ -163,6 +169,7 @@ function closeMap(restoreFocus = false) {
 
 /** Opens the map inside the pharmacy's own row, so its context stays in view. */
 function openMap(pharmacy) {
+  closeRadar();
   selected = pharmacy;
   const frame = document.createElement('iframe');
   frame.src = embedUrl(pharmacy);
@@ -172,6 +179,45 @@ function openMap(pharmacy) {
   map.panel.hidden = false;
   renderMapLabels();
   map.heading.focus();
+}
+
+function closeRadar(restoreFocus = false) {
+  radarGeneration++;
+  radar?.close();
+  radar = null;
+  $('radar-host').replaceChildren();
+  $('open-radar').setAttribute('aria-expanded', 'false');
+  if (restoreFocus) $('open-radar').focus();
+}
+
+async function showRadar() {
+  if (state.status !== 'found') return;
+  if ($('open-radar').getAttribute('aria-expanded') === 'true') {
+    closeRadar(true);
+    return;
+  }
+  const compass = requestCompass();
+  closeMap();
+  const generation = ++radarGeneration;
+  $('open-radar').setAttribute('aria-expanded', 'true');
+  $('radar-host').textContent = tr('radarLoading');
+  try {
+    const { openRadar } = await import('./radar-view.js');
+    if (generation !== radarGeneration) return;
+    $('radar-host').replaceChildren();
+    radar = openRadar({
+      container: $('radar-host'),
+      pharmacies: state.result.results,
+      targetId: state.result.results[0].id,
+      language: lang,
+      compass,
+      onClose: () => closeRadar(true),
+    });
+  } catch {
+    if (generation !== radarGeneration) return;
+    closeRadar();
+    $('radar-host').textContent = tr('radarError');
+  }
 }
 
 function element(tag, className, text) {
@@ -312,6 +358,8 @@ $('cancel').addEventListener('click', () => {
   $('locate').focus();
 });
 map.close.addEventListener('click', () => closeMap(true));
+$('open-radar').addEventListener('click', showRadar);
+window.addEventListener('pagehide', () => closeRadar());
 $('show-all').addEventListener('click', () => {
   expanded = !expanded;
   closeMap();
@@ -323,6 +371,7 @@ $('change-location').addEventListener('click', event => {
   $('locate').focus();
 });
 $('language').addEventListener('change', event => {
+  closeRadar();
   lang = event.target.value;
   render();
 });
