@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { formatOpeningHours as format } from '../src/hours.js';
+import { formatOpeningHours as format, todaysRule } from '../src/hours.js';
 import { messages } from '../src/strings.js';
 
 const formatOpeningHours = (value, language) => format(value, language, messages[language].openingHours);
@@ -48,4 +48,28 @@ test('a comma and space before a weekday starts another rule', () => {
 
 test('stray separators and spaces are tolerated', () => {
   assert.deepEqual(formatOpeningHours(' Mo-Fr 09:00-18:00 ; ', 'en'), ['Mon–Fri 09:00–18:00']);
+});
+
+test("today's rule follows the weekday, and a later rule overrides an earlier one", () => {
+  const hours = 'Mo-Su 08:00-22:00; Sa 10:00-19:00; Su off; PH 12:00-16:00';
+  const on = weekday => todaysRule(hours, { weekday, holiday: false });
+  assert.deepEqual([0, 4, 5, 6].map(on), [0, 0, 1, 2]);
+  assert.equal(todaysRule('Fr-Mo 10:00-14:00', { weekday: 0, holiday: false }), 0);
+  assert.equal(todaysRule('Mo,We 08:00-12:00', { weekday: 1, holiday: false }), -1);
+  assert.equal(todaysRule('10:00-20:00', { weekday: 2, holiday: false }), 0);
+  assert.equal(todaysRule('24/7', { weekday: 6, holiday: true }), 0);
+});
+
+test('on a day off only a public-holiday rule is named', () => {
+  assert.equal(todaysRule('Mo-Fr 09:00-18:00; PH off', { weekday: 0, holiday: true }), 1);
+  assert.equal(todaysRule('Su,PH 12:00-16:00', { weekday: 2, holiday: true }), 0);
+  // The value says nothing about holidays, so no rule is marked rather than a guess.
+  assert.equal(todaysRule('Mo-Fr 09:00-18:00', { weekday: 0, holiday: true }), -1);
+  assert.equal(todaysRule('10:00-20:00', { weekday: 0, holiday: true }), -1);
+});
+
+test('unsupported syntax names no rule for today', () => {
+  assert.equal(todaysRule('Mo-Fr 9-18', { weekday: 0, holiday: false }), -1);
+  assert.equal(todaysRule('', { weekday: 0, holiday: false }), -1);
+  assert.equal(todaysRule(undefined, { weekday: 0, holiday: false }), -1);
 });

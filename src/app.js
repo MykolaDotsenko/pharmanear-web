@@ -2,16 +2,17 @@ import { mapsUrl, embedUrl } from './core.js';
 import { messages, preferredLanguage } from './strings.js';
 import { createSearchController } from './search-controller.js';
 import { lookupPharmacies } from './catalog.js';
-import { formatOpeningHours } from './hours.js';
-import { buildGarland, createMelody, createSnowfall } from './festive.js';
+import { formatOpeningHours, todaysRule } from './hours.js';
+import { finnishToday } from './holidays.js';
+import { setUpSeason } from './festive.js';
+import { setUpTheme } from './theme.js';
+import { setUpEffects, transition } from './effects.js';
 
 const $ = id => document.getElementById(id);
 const root = document.documentElement;
 const initialLimit = 5;
 const maximumShown = 20;
-const themeKey = 'pharmanear.theme';
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
-const systemDark = matchMedia('(prefers-color-scheme: dark)');
 
 let lang = preferredLanguage(navigator.languages);
 let expanded = false;
@@ -35,24 +36,35 @@ const controller = createSearchController({
   geolocation: navigator.geolocation,
   onChange(next) {
     const wasBusy = state.busy;
+    const hadOutcome = hasOutcome(state);
     state = next;
     if (next.busy) {
       expanded = false;
       closeMap();
     }
-    render();
-    if (wasBusy && next.status === 'found' && matchMedia('(max-width: 760px)').matches) {
-      // Keep keyboard focus with the control the user activated.
-      if (!document.activeElement?.matches(':focus-visible')) {
-        $('results-heading').scrollIntoView({
-          block: 'start',
-          behavior: reducedMotion.matches ? 'instant' : 'smooth',
-        });
+    const update = () => {
+      render();
+      if (wasBusy && next.status === 'found' && matchMedia('(max-width: 760px)').matches) {
+        // Keep keyboard focus with the control the user activated.
+        if (!document.activeElement?.matches(':focus-visible')) {
+          $('results-heading').scrollIntoView({
+            block: 'start',
+            behavior: reducedMotion.matches ? 'instant' : 'smooth',
+          });
+        }
       }
-    }
+    };
+    // The hero changes shape when an outcome first appears or goes; that change is animated.
+    if (hasOutcome(next) !== hadOutcome) transition(update, reducedMotion);
+    else update();
   },
 });
 let state = controller.state;
+
+/** Whether the state shows an outcome (results or a failure), which compacts the hero. */
+function hasOutcome({ status }) {
+  return ['found', 'error', 'denied', 'empty'].includes(status);
+}
 
 function setText(labels) {
   for (const [id, key] of Object.entries(labels)) $(id).textContent = tr(key);
@@ -108,7 +120,7 @@ function renderControls() {
   });
 
   document.body.dataset.searchState = status;
-  document.body.toggleAttribute('data-outcome', found || failed);
+  document.body.toggleAttribute('data-outcome', hasOutcome(state));
   document.querySelector('.results').dataset.state = status;
   $('loading-art').hidden = !busy;
   $('cancel').hidden = !busy;
@@ -178,8 +190,11 @@ function distanceText(meters) {
   }).format(short ? meters : meters / 1000);
 }
 
-/** Localized rules when the mapped value is simple enough; otherwise the mapped rules as they are. */
-function hoursLine(pharmacy) {
+/**
+ * Localized rules when the mapped value is simple enough, with today's rule marked; otherwise the mapped
+ * rules as they are. Nothing says whether the pharmacy is open: the hours are unverified.
+ */
+function hoursLine(pharmacy, today) {
   const hours = element('p', 'hours');
   if (!pharmacy.hours) {
     hours.textContent = tr('missingHours');
@@ -191,11 +206,15 @@ function hoursLine(pharmacy) {
       .split(';')
       .map(part => part.trim())
       .filter(Boolean);
+  const current = todaysRule(pharmacy.hours, today);
   // The separator stays with the rule before it, so a wrapped line never starts with "·".
   const value = element('span', 'hours-value');
   rules.forEach((rule, index) => {
     const last = index === rules.length - 1;
-    value.append(element('span', 'hours-rule', last ? rule : `${rule} ·`));
+    const item = element('span', index === current ? 'hours-rule today' : 'hours-rule', rule);
+    if (index === current) item.append(' ', element('span', 'today-tag', tr('today')));
+    if (!last) item.append(' ·');
+    value.append(item);
     if (!last) value.append(' ');
   });
   hours.append(element('span', 'hours-label', tr('hours')), value);
@@ -203,7 +222,7 @@ function hoursLine(pharmacy) {
 }
 
 /** `entrance` is the row's place among the rows arriving now, or negative for a row already on screen. */
-function pharmacyRow(pharmacy, index, entrance) {
+function pharmacyRow(pharmacy, index, entrance, today) {
   const name = pharmacy.name || tr('unnamed');
   const row = element('li', index === 0 ? 'pharmacy closest' : 'pharmacy');
   if (entrance >= 0) {
@@ -218,7 +237,7 @@ function pharmacyRow(pharmacy, index, entrance) {
   if (index === 0) info.append(element('p', 'closest-label', tr('nearest')));
   info.append(element('h3', '', name));
   if (pharmacy.address) info.append(element('p', '', pharmacy.address));
-  info.append(hoursLine(pharmacy));
+  info.append(hoursLine(pharmacy, today));
 
   const preview = element('button', 'map-preview', tr('mapHere'));
   preview.type = 'button';
@@ -266,7 +285,8 @@ function renderResults() {
   const seen = result === shownResult ? shownCount : 0;
   shownResult = result;
   shownCount = visible.length;
-  list.append(...visible.map((pharmacy, index) => pharmacyRow(pharmacy, index, index - seen)));
+  const today = finnishToday();
+  list.append(...visible.map((pharmacy, index) => pharmacyRow(pharmacy, index, index - seen, today)));
   if (selected) {
     const button = previewButton(selected.id);
     if (button) button.closest('li').append(map.panel);
@@ -280,99 +300,6 @@ function render() {
   renderMapLabels();
   renderResults();
 }
-
-// Theme: the system's unless the visitor chose one; theme-init.js applied it before the first paint.
-function storedTheme() {
-  try {
-    return localStorage.getItem(themeKey);
-  } catch {
-    return null;
-  }
-}
-
-function applyTheme(theme) {
-  root.dataset.theme = theme;
-  $('theme-toggle').setAttribute('aria-pressed', String(theme === 'dark'));
-  document.querySelector('meta[name="theme-color"]').content = getComputedStyle(root)
-    .getPropertyValue('--paper')
-    .trim();
-}
-
-/** The new theme spreads in a circle from the button where the browser supports view transitions. */
-function revealTheme(theme, button) {
-  if (!document.startViewTransition || reducedMotion.matches) {
-    applyTheme(theme);
-    return;
-  }
-  const { left, top, width, height } = button.getBoundingClientRect();
-  const x = left + width / 2;
-  const y = top + height / 2;
-  const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
-  const transition = document.startViewTransition(() => applyTheme(theme));
-  transition.ready
-    .then(() =>
-      root.animate(
-        { clipPath: [`circle(0 at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] },
-        {
-          duration: 550,
-          easing: 'cubic-bezier(0.2, 0.7, 0.2, 1)',
-          pseudoElement: '::view-transition-new(root)',
-        },
-      ),
-    )
-    .catch(() => {});
-}
-
-$('theme-toggle').addEventListener('click', event => {
-  const theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
-  try {
-    localStorage.setItem(themeKey, theme);
-  } catch {
-    // Without storage the choice lasts until the page is closed.
-  }
-  revealTheme(theme, event.currentTarget);
-});
-systemDark.addEventListener('change', event => {
-  if (!storedTheme()) applyTheme(event.matches ? 'dark' : 'light');
-});
-
-// Season: lights, snow and a melody, each only on request and only from 25 November to 6 January.
-function setUpSeason() {
-  buildGarland($('garland'));
-  const snowButton = $('snow-toggle');
-  const melodyButton = $('melody-toggle');
-  const snow = createSnowfall($('snowfall'), { reducedMotion: reducedMotion.matches });
-  const melody = createMelody({ onEnd: () => melodyButton.setAttribute('aria-pressed', 'false') });
-
-  snowButton.addEventListener('click', () => {
-    if (snow.running) snow.stop();
-    else snow.start();
-    snowButton.setAttribute('aria-pressed', String(snow.running));
-  });
-  melodyButton.addEventListener('click', async () => {
-    if (melody.playing) {
-      melody.stop();
-      melodyButton.setAttribute('aria-pressed', 'false');
-      return;
-    }
-    melodyButton.setAttribute('aria-pressed', 'true');
-    try {
-      await melody.play();
-    } catch {
-      melodyButton.setAttribute('aria-pressed', 'false');
-    }
-  });
-}
-
-// A soft light follows the pointer across result cards (hover-capable pointers only; see style.css).
-$('list').addEventListener('pointermove', event => {
-  if (event.pointerType !== 'mouse') return;
-  const card = event.target.closest('.pharmacy');
-  if (!card) return;
-  const box = card.getBoundingClientRect();
-  card.style.setProperty('--mx', `${event.clientX - box.left}px`);
-  card.style.setProperty('--my', `${event.clientY - box.top}px`);
-});
 
 $('locate').addEventListener('click', () => controller.locate());
 $('city-form').addEventListener('submit', event => {
@@ -400,6 +327,15 @@ $('language').addEventListener('change', event => {
   render();
 });
 
-if (root.dataset.season === 'christmas') setUpSeason();
-applyTheme(root.dataset.theme ?? (systemDark.matches ? 'dark' : 'light'));
+setUpTheme({ toggle: $('theme-toggle'), reducedMotion });
+if (root.dataset.season === 'christmas') {
+  setUpSeason({
+    garland: $('garland'),
+    snowButton: $('snow-toggle'),
+    melodyButton: $('melody-toggle'),
+    canvas: $('snowfall'),
+    reducedMotion: reducedMotion.matches,
+  });
+}
+setUpEffects({ list: $('list'), hero: document.querySelector('.hero'), reducedMotion });
 render();

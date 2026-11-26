@@ -1,23 +1,7 @@
 import { test, expect } from '@playwright/test';
-const fixture = {
-  elements: [
-    { type: 'node', id: 1, lat: 60.47, lon: 22.28, tags: { amenity: 'pharmacy', name: 'Far pharmacy' } },
-    {
-      type: 'node',
-      id: 2,
-      lat: 60.452,
-      lon: 22.267,
-      tags: { amenity: 'pharmacy', name: 'Near pharmacy', 'addr:street': 'Example street' },
-    },
-  ],
-};
-// Keep existing live-provider mocks independent of the production catalog.
-test.beforeEach(async ({ page }) => {
-  await page.route('**/data/current-finland-pharmacies.json', route => route.fulfill({ status: 404 }));
-  await page.route('**/data/finland-pharmacies.json', route => route.fulfill({ status: 404 }));
-});
-const endpoint = /^https:\/\/(overpass-api\.de|overpass\.private\.coffee)\/api\/interpreter$/;
-const fulfill = (route, json) => route.fulfill({ json, headers: { 'access-control-allow-origin': '*' } });
+import { endpoint, fixture, fulfill, withHours, withoutCatalog } from './support.js';
+
+test.beforeEach(async ({ page }) => withoutCatalog(page));
 test('idle is private, search orders results, accessible map link and locale', async ({ page }) => {
   let requests = 0;
   await page.route(endpoint, r => {
@@ -159,7 +143,7 @@ test.describe('automated accessibility checks', () => {
       test(`no violations in ${season} ${colorScheme} idle, results and map states`, async ({ page }) => {
         await page.clock.setFixedTime(new Date(date));
         await page.emulateMedia({ colorScheme, reducedMotion: 'reduce' });
-        await page.route(endpoint, route => fulfill(route, fixture));
+        await page.route(endpoint, route => fulfill(route, withHours('Mo-Su 08:00-22:00; PH 10:00-16:00')));
         await page.route('https://www.openstreetmap.org/export/embed.html?*', route =>
           route.fulfill({ contentType: 'text/html', body: '<p>Mock map</p>' }),
         );
@@ -168,6 +152,7 @@ test.describe('automated accessibility checks', () => {
 
         await page.locator('#search-label').click();
         await expect(page.locator('#list li')).toHaveCount(2);
+        await expect(page.locator('.today-tag')).toHaveCount(1);
         await page.locator('#result-details summary').click();
         await page.getByRole('button', { name: 'Map preview: Near pharmacy' }).click();
         await expect(page.locator('#map-panel')).toBeVisible();
@@ -402,6 +387,8 @@ test('local catalog renders results while both live providers are unavailable', 
 });
 
 test('mobile search keeps details collapsed and preserves readable hours', async ({ page }) => {
+  // A Sunday, which neither rule covers, so no rule is marked for today.
+  await page.clock.setFixedTime(new Date('2026-10-18T10:00:00Z'));
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.route(endpoint, r =>
@@ -545,4 +532,81 @@ test.describe('browser language preference', () => {
     await expect(page.locator('#language')).toHaveValue('fi');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Löydä apteekki läheltäsi.');
   });
+});
+
+test.describe("today's opening hours", () => {
+  const hours = 'Mo-Fr 09:00-18:00; Sa 10:00-14:00; PH off';
+  for (const [day, date, marked] of [
+    ['a weekday', '2026-10-15T12:00:00Z', 'Mon–Fri 09:00–18:00 today ·'],
+    ['a Saturday', '2026-10-17T12:00:00Z', 'Sat 10:00–14:00 today ·'],
+    ['Independence Day', '2026-12-06T12:00:00Z', 'Public holidays closed today'],
+  ]) {
+    test(`on ${day} the rule for today is marked`, async ({ page }) => {
+      await page.clock.setFixedTime(new Date(date));
+      await page.route(endpoint, route => fulfill(route, withHours(hours)));
+      await page.goto('/');
+      await page.locator('#search-label').click();
+      await expect(page.locator('.hours-rule.today')).toHaveText(marked);
+      await expect(page.locator('#list li').first()).toContainText('Mapped hours (unverified)');
+    });
+  }
+
+  test('a holiday the hours do not mention marks nothing, and the tag is translated', async ({ page }) => {
+    await page.clock.setFixedTime(new Date('2026-12-24T12:00:00Z'));
+    await page.route(endpoint, route => fulfill(route, withHours('Mo-Fr 09:00-18:00')));
+    await page.goto('/');
+    await page.locator('#search-label').click();
+    await expect(page.locator('.hours-rule')).toHaveCount(1);
+    await expect(page.locator('.today-tag')).toHaveCount(0);
+
+    await page.clock.setFixedTime(new Date('2026-12-21T12:00:00Z'));
+    await page.locator('#language').selectOption('fi');
+    await page.locator('#search-label').click();
+    await expect(page.locator('.hours-rule.today')).toHaveText('ma–pe 09.00–18.00 tänään');
+  });
+});
+
+test('on a phone both actions share one line and the rank number is left out', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.route(endpoint, route => fulfill(route, fixture));
+  await page.goto('/');
+  await page.locator('#language').selectOption('fi');
+  await page.locator('#search-label').click();
+  const row = page.locator('#list li').first();
+  const preview = await row.locator('.map-preview').boundingBox();
+  const link = await row.locator('a').boundingBox();
+  expect(Math.abs(preview.y - link.y)).toBeLessThan(2);
+  await expect(row.locator('.rank')).toBeHidden();
+});
+
+test('the results read as a structured list to assistive technology', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-10-15T12:00:00Z'));
+  await page.route(endpoint, route => fulfill(route, withHours('Mo-Fr 09:00-18:00; Sa 10:00-14:00; PH off')));
+  await page.goto('/');
+  await page.locator('#search-label').click();
+  await expect(page.locator('.results')).toMatchAriaSnapshot(`
+    - region "Nearby pharmacies":
+      - heading "Nearby pharmacies" [level=2]
+      - status: 2 mapped pharmacies · Turku
+      - group: About these results
+      - list "Nearby pharmacies":
+        - listitem:
+          - paragraph: Closest mapped result
+          - heading "Near pharmacy" [level=3]
+          - paragraph: Example street
+          - paragraph: Mapped hours (unverified) Mon–Fri 09:00–18:00 today · Sat 10:00–14:00 · Public holidays closed
+          - text: 31 m
+          - 'button "Map preview: Near pharmacy"'
+          - 'link "Open in OpenStreetMap: Near pharmacy"'
+        - listitem:
+          - heading "Far pharmacy" [level=3]
+          - paragraph: Hours not listed
+          - text: 2.2 km
+          - 'button "Map preview: Far pharmacy"'
+          - 'link "Open in OpenStreetMap: Far pharmacy"'
+      - link "Change location"
+      - paragraph:
+        - link "Check Finnish pharmacy details at Apteekki.fi"
+  `);
 });

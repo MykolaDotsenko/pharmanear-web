@@ -166,6 +166,7 @@ summary:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 4px;
   border-radius: var(--radius-small);
+  animation: focus-in 0.22s var(--ease-out);
 }
 h1 {
   font-family: Georgia, 'Times New Roman', serif;
@@ -360,7 +361,6 @@ h2 {
       color-mix(in oklab, var(--aurora-3) 45%, transparent),
       transparent 70%
     );
-  animation: aurora 18s ease-in-out infinite;
 }
 body[data-outcome] .hero::before {
   opacity: calc(var(--aurora-strength) * 0.55);
@@ -419,6 +419,25 @@ body[data-outcome] .hero::before {
 }
 .primary:active {
   transform: scale(0.985);
+}
+.primary {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+.primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    color-mix(in oklab, white 20%, transparent) 50%,
+    transparent 65%
+  );
+  translate: -110% 0;
 }
 .primary svg {
   width: 23px;
@@ -650,6 +669,38 @@ ol {
   animation: row-in 0.5s var(--ease-out) both;
   animation-delay: calc(var(--i, 0) * 45ms);
 }
+@property --sweep {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+.pharmacy.closest::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  padding: 2px;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: conic-gradient(
+    from var(--sweep),
+    transparent 0 52%,
+    color-mix(in oklab, var(--accent) 80%, transparent) 68%,
+    var(--gold) 79%,
+    color-mix(in oklab, var(--gold) 45%, white) 84%,
+    transparent 93%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+}
+.pharmacy.closest.arriving::after {
+  animation: sweep 2.4s var(--ease-out) 0.35s both;
+}
 .pharmacy.closest {
   background: linear-gradient(135deg, var(--wash), var(--surface) 75%);
   border-color: color-mix(in oklab, var(--accent) 35%, var(--line));
@@ -753,6 +804,23 @@ ol {
 /* A rule such as "Sun 11:00–18:00" never breaks in the middle. */
 .hours-rule {
   white-space: nowrap;
+}
+/* Today's rule is marked; it says which hours apply today, never whether the pharmacy is open. */
+.hours-rule.today {
+  font-weight: 650;
+}
+.today-tag {
+  display: inline-block;
+  padding: 0 0.5em;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--pine) 13%, transparent);
+  color: var(--pine);
+  font-size: 0.66rem;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  line-height: 1.7;
+  text-transform: uppercase;
+  vertical-align: 0.1em;
 }
 
 /* The optional map opens inside the selected row. */
@@ -1000,8 +1068,44 @@ body[data-outcome] h1 {
   }
 }
 @keyframes aurora {
-  50% {
-    transform: translate3d(2%, -2%, 0) scale(0.96);
+  to {
+    transform: translate3d(2%, -3%, 0) scale(0.96);
+  }
+}
+@keyframes art-drift {
+  to {
+    translate: 0 2.5rem;
+  }
+}
+@keyframes focus-in {
+  from {
+    outline-offset: 10px;
+    outline-color: transparent;
+  }
+}
+@keyframes sweep {
+  0% {
+    --sweep: 0deg;
+    opacity: 0;
+  }
+  15%,
+  80% {
+    opacity: 1;
+  }
+  100% {
+    --sweep: 360deg;
+    opacity: 0;
+  }
+}
+@keyframes bob {
+  to {
+    translate: 0 -2px;
+    rotate: -8deg;
+  }
+}
+@keyframes spin {
+  to {
+    rotate: 1turn;
   }
 }
 @keyframes twinkle {
@@ -1051,6 +1155,13 @@ body[data-outcome] h1 {
   }
   .pharmacy:hover::before {
     opacity: 1;
+  }
+  .pharmacy.closest:hover::after {
+    animation: sweep 2.4s var(--ease-out) both;
+  }
+  .primary:hover::after {
+    translate: 110% 0;
+    transition: translate 0.9s var(--ease-out);
   }
   .pharmacy a:hover,
   .map-preview:hover {
@@ -1134,11 +1245,12 @@ body[data-outcome] h1 {
   }
 }
 @media (max-width: 560px) {
+  /* The rank is decorative (the order says it); dropping it gives the two actions one line. */
   .pharmacy {
-    grid-template-columns: 1.6rem minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
-      'rank info distance'
-      '. actions actions';
+      'info distance'
+      'actions actions';
     column-gap: 0.6rem;
     padding: 0.9rem 0.8rem;
   }
@@ -1146,8 +1258,7 @@ body[data-outcome] h1 {
     padding-left: 0.8rem;
   }
   .rank {
-    align-self: start;
-    padding-top: 0.2rem;
+    display: none;
   }
   .distance,
   .pharmacy.closest .distance {
@@ -1207,10 +1318,124 @@ body[data-outcome] h1 {
   }
 }
 
-/* Switching the theme reveals the new one in a circle from the button (see app.js); the browser's
-   default cross-fade is turned off so only that reveal runs. */
-::view-transition-old(root),
-::view-transition-new(root) {
+/* Scrolling moves the aurora and the artwork at their own pace, so nothing drifts unless the visitor does. */
+@supports (animation-timeline: scroll()) {
+  .hero::before {
+    animation: aurora linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0 70vh;
+  }
+  .landscape {
+    animation: art-drift linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0 80vh;
+  }
+}
+
+/* The artwork leans towards a mouse pointer, its layers at different depths, under a soft glare
+   (effects.js sets --lean-x and --lean-y from -1 to 1). */
+@media (hover: hover) and (pointer: fine) {
+  .landscape {
+    position: relative;
+    transform: perspective(1100px) rotateX(calc(var(--lean-y, 0) * -4deg))
+      rotateY(calc(var(--lean-x, 0) * 5deg));
+    transition: transform 0.7s var(--ease-out);
+  }
+  .landscape :is(.contours, .locator-art, .festive-art) {
+    transition: transform 0.7s var(--ease-out);
+  }
+  .landscape .contours {
+    transform: translate(calc(var(--lean-x, 0) * -5px), calc(var(--lean-y, 0) * -5px));
+  }
+  .landscape .locator-art {
+    transform: translate(calc(var(--lean-x, 0) * 7px), calc(var(--lean-y, 0) * 7px));
+  }
+  .landscape .festive-art {
+    transform: translate(calc(var(--lean-x, 0) * 11px), calc(var(--lean-y, 0) * 11px));
+  }
+  .landscape::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s;
+    background: radial-gradient(
+      60% 60% at calc(50% + var(--lean-x, 0) * 35%) calc(50% + var(--lean-y, 0) * 35%),
+      color-mix(in oklab, white 22%, transparent),
+      transparent 70%
+    );
+  }
+  .hero:hover .landscape::after {
+    opacity: 1;
+  }
+}
+
+/* A faint paper grain under the content, for texture on the large plain areas. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: url('grain.svg');
+  opacity: 0.05;
+}
+:root[data-theme='dark'] body::before {
+  opacity: 0.07;
+}
+
+/* A playing melody makes its note bob; falling snow turns its flake. Both stop with their button. */
+#melody-toggle[aria-pressed='true'] svg {
+  animation: bob 0.42s var(--ease-out) infinite alternate;
+}
+#snow-toggle[aria-pressed='true'] svg {
+  animation: spin 9s linear infinite;
+}
+
+/* Switching the theme reveals the new one in a circle from the button (theme.js); the browser's default
+   cross-fade is turned off so only that reveal runs. */
+:root[data-transition='theme']::view-transition-old(root),
+:root[data-transition='theme']::view-transition-new(root) {
   animation: none;
   mix-blend-mode: normal;
+}
+/* When results first appear, the page cross-fades while the heading, the main action and the artwork glide
+   into their compact places (effects.js). */
+:root[data-transition='outcome'] #heading {
+  view-transition-name: hero-heading;
+}
+:root[data-transition='outcome'] #locate {
+  view-transition-name: hero-locate;
+}
+:root[data-transition='outcome'] .landscape {
+  view-transition-name: hero-art;
+}
+:root[data-transition='outcome']::view-transition-group(*) {
+  animation-duration: 0.45s;
+  animation-timing-function: var(--ease-out);
+}
+
+/* Windows high contrast and other forced colours: system colours carry every state, decoration goes. */
+@media (forced-colors: active) {
+  .pharmacy.closest {
+    border-left: 4px solid Highlight;
+  }
+  .icon-button[aria-pressed='true'] {
+    forced-color-adjust: none;
+    background: Highlight;
+    border-color: Highlight;
+    color: HighlightText;
+  }
+  .today-tag {
+    border: 1px solid CanvasText;
+  }
+  body::before,
+  .hero::before,
+  .pharmacy::before,
+  .pharmacy.closest::after,
+  .landscape::after,
+  .primary::after {
+    display: none;
+  }
 }

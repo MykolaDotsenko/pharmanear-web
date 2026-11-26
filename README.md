@@ -14,17 +14,20 @@ affiliated with Treat Health and not medical advice.
   rounded to two decimals and widening from 3 to 10 to 30 km.
 - Ranks by straight-line distance with the distance beside each name, shows up to 20 results (5 at first)
   and opens a pharmacy's map inside its row or on openstreetmap.org on request.
-- Shows community-mapped opening hours in the interface language (`ma–pe 09.00–20.00`, `mån–fre 09:00–20:00`),
-  always labelled as unverified and never turned into an "open now" claim; links to Apteekki.fi.
+- Shows community-mapped opening hours in the interface language (`ma–pe 09.00–20.00`, `mån–fre 09:00–20:00`)
+  and marks the rule for today in Finland, public holidays included. They are always labelled as unverified
+  and never turned into an "open now" claim; links to Apteekki.fi.
 - English, Finnish and Swedish, starting in the browser's preferred language; a light and dark theme that
   follows the system until you choose one; reduced motion.
 - Depth and motion done by the browser: a frosted sticky header, result cards that arrive in sequence and
-  follow the pointer with a soft light, a drifting aurora behind the hero, smooth disclosures, and a theme
-  change that spreads in a circle from its button (View Transitions). Each is progressive enhancement, and
-  reduced motion turns all of it off.
+  follow the pointer with a soft light, an artwork that leans towards the pointer in 3D, an aurora and
+  artwork that move with scrolling, a light that runs once round the closest result, a paper grain, smooth
+  disclosures, and view transitions for the theme change and the first results. Each is progressive
+  enhancement; reduced motion turns all of it off and forced colours keep every state visible.
 - From 25 November to 6 January: a Christmas palette, a string of lights, and optional snowfall and a short
-  _Jingle Bells_ (public domain) played through the Web Audio API. Neither starts on its own, snow stays still
-  with reduced motion, and no audio file or other asset is downloaded.
+  _Jingle Bells_ (public domain), arranged for celesta, bass and chords with sleigh bells and a room reverb,
+  synthesized live with the Web Audio API. Neither starts on its own, snow stays still with reduced motion,
+  and no audio file or other asset is downloaded.
 - Handles denied permission, slow or failed providers, cancellation and empty areas without ever showing a
   stale result.
 
@@ -74,9 +77,12 @@ Formatting is checked in CI: `npm run format:check`, or `npm run format` to fix.
 | `src/catalog.js`              | Local catalog lookup, freshness rules and refresh, live fallback         |
 | `src/provider.js`             | Overpass transport: timeout, cancellation, one independent fallback      |
 | `src/search-controller.js`    | Search lifecycle: one operation at a time, stale results never published |
-| `src/app.js`                  | DOM rendering, events and the theme toggle                               |
-| `src/hours.js`                | Localized formatting of common OpenStreetMap opening hours               |
-| `src/festive.js`              | Seasonal string of lights, snowfall and melody                           |
+| `src/app.js`                  | DOM rendering and search events                                          |
+| `src/hours.js`                | Localized opening hours and the rule that applies today                  |
+| `src/holidays.js`             | Today in Finland: weekday and public holidays                            |
+| `src/theme.js`                | Theme toggle, its memory and the circular reveal                         |
+| `src/effects.js`              | Decorative pointer depth and the results view transition                 |
+| `src/festive.js`              | Seasonal string of lights, snowfall and melody, and their toggles        |
 | `src/theme-init.js`           | Sets the theme and season before the first paint                         |
 | `src/strings.js`              | English, Finnish and Swedish copy and the browser-language default       |
 | `server.mjs`                  | Loopback development server using the headers in `vercel.json`           |
@@ -88,8 +94,9 @@ Formatting is checked in CI: `npm run format:check`, or `npm run format` to fix.
 ## Verification
 
 Every push runs formatting, unit tests, Playwright tests (user flows, every axe WCAG 2.2 A/AA and
-best-practice rule in light, dark, Christmas, Finnish, Swedish and 320 px layouts, keyboard order) and the
-production build. Separate workflows run the real catalog in a browser, rebuild the catalog weekly and check
+best-practice rule in light, dark, Christmas, Finnish, Swedish and 320 px layouts, keyboard order, an
+accessibility-tree snapshot, text contrast on rendered pixels, forced colours, and an offline render of the
+melody) and the production build. Separate workflows run the real catalog in a browser, rebuild the catalog weekly and check
 the deployed data after each publication. [docs/review.md](docs/review.md) records what is verified
 automatically and what still needs a person.
 
