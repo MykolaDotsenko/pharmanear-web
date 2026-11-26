@@ -14,6 +14,16 @@ jobs:
         with:
           node-version: '22'
       - run: npm run format:check
+      - name: Report canonical formatting for radar patch
+        if: failure()
+        run: |
+          npx --yes prettier@3.6.2 --write src/radar-view.js src/radar-session.js src/radar-geometry.js src/radar.css src/app.js index.html src/strings.js tests/radar-geometry.test.js e2e/radar.spec.js vercel.json
+          python3 - <<'PY'
+          import json, pathlib, subprocess
+          for path in ["src/radar-view.js","src/radar-session.js","src/radar-geometry.js","src/radar.css","src/app.js","index.html","src/strings.js","tests/radar-geometry.test.js","e2e/radar.spec.js","vercel.json"]:
+              if subprocess.run(['git','diff','--quiet','--',path]).returncode:
+                  print('RADAR_FORMAT '+json.dumps({'path':path,'content':pathlib.Path(path).read_text()},ensure_ascii=True))
+          PY
       - run: npm test
       - run: for file in src/*.js; do node --check "$file"; done
       - run: npm install --no-save --package-lock=false @playwright/test@1.56.1 axe-core@4.10.3
