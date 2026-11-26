@@ -1,4 +1,5 @@
 import { mapsUrl, embedUrl } from './core.js';
+import { reviewedDetails, possibleDuplicate } from './pharmacy-details.js';
 import { messages, preferredLanguage } from './strings.js';
 import { createSearchController } from './search-controller.js';
 import { lookupPharmacies } from './catalog.js';
@@ -133,6 +134,8 @@ function renderControls() {
   $('retry').hidden = !state.canRetry || status === 'denied' || status === 'empty';
   $('result-details').hidden = !found;
   $('result-tools').hidden = !found;
+  $('hours-disclosure').hidden = !found;
+  $('hours-disclosure').textContent = tr('hoursDisclosure');
   $('open-radar').hidden = !found;
   $('open-radar').textContent = tr('radar');
 
@@ -244,6 +247,7 @@ function hoursLine(pharmacy, today) {
   const hours = element('p', 'hours');
   if (!pharmacy.hours) {
     hours.textContent = tr('missingHours');
+    hours.classList.add('hours-missing');
     return hours;
   }
   const rules =
@@ -268,7 +272,8 @@ function hoursLine(pharmacy, today) {
 }
 
 /** `entrance` is the row's place among the rows arriving now, or negative for a row already on screen. */
-function pharmacyRow(pharmacy, index, entrance, today) {
+function pharmacyRow(pharmacy, index, entrance, today, results) {
+  const review = reviewedDetails(pharmacy);
   const name = pharmacy.name || tr('unnamed');
   const row = element('li', index === 0 ? 'pharmacy closest' : 'pharmacy');
   if (entrance >= 0) {
@@ -282,8 +287,26 @@ function pharmacyRow(pharmacy, index, entrance, today) {
   const info = element('div', 'pharmacy-info');
   if (index === 0) info.append(element('p', 'closest-label', tr('nearest')));
   info.append(element('h3', '', name));
-  if (pharmacy.address) info.append(element('p', '', pharmacy.address));
+  const address = review?.address || pharmacy.address;
+  if (address) info.append(element('p', '', address));
+  else if (pharmacy.name) info.append(element('p', 'missing-detail', tr('missingAddress')));
+  if (!pharmacy.name) {
+    const message = possibleDuplicate(pharmacy, results) ? tr('possibleDuplicate') : tr('incompleteEntry');
+    info.append(element('p', 'missing-detail', message));
+  }
   info.append(hoursLine(pharmacy, today));
+  if (review) {
+    const date = review.checked && new Intl.DateTimeFormat(lang, { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date(review.checked));
+    const source = element('a', 'hours-source', date ? tr('sourceChecked') + ' ' + date : tr('sourceLink'));
+    source.href = review.url;
+    source.rel = 'noreferrer';
+    info.append(source);
+  } else if (!pharmacy.hours) {
+    const source = element('a', 'hours-source', tr('checkHours'));
+    source.href = 'https://www.apteekki.fi/apteekkihaku';
+    source.rel = 'noreferrer';
+    info.append(source);
+  }
 
   const preview = element('button', 'map-preview', tr('mapHere'));
   preview.type = 'button';
@@ -332,7 +355,7 @@ function renderResults() {
   shownResult = result;
   shownCount = visible.length;
   const today = finnishToday();
-  list.append(...visible.map((pharmacy, index) => pharmacyRow(pharmacy, index, index - seen, today)));
+  list.append(...visible.map((pharmacy, index) => pharmacyRow(pharmacy, index, index - seen, today, result.results)));
   if (selected) {
     const button = previewButton(selected.id);
     if (button) button.closest('li').append(map.panel);
