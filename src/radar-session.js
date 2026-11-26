@@ -21,6 +21,7 @@ export function createRadarSession({ onChange, geo = navigator.geolocation, comp
   let motion = null;
   let motionAt = 0;
   let timer;
+  let fixTimer;
   let compassAllowed = false;
   let status = 'locating';
   let wake = null;
@@ -57,6 +58,7 @@ export function createRadarSession({ onChange, geo = navigator.geolocation, comp
     if (watch !== null) geo?.clearWatch(watch);
     watch = null;
     clearTimeout(timer);
+    clearTimeout(fixTimer);
     anchor = null;
     motion = null;
     heading = null;
@@ -90,6 +92,11 @@ export function createRadarSession({ onChange, geo = navigator.geolocation, comp
       }
       position = next;
       status = 'active';
+      clearTimeout(fixTimer);
+      fixTimer = setTimeout(() => {
+        status = 'stale';
+        publish();
+      }, 15000);
       publish();
       void holdScreen();
     }, error => {
