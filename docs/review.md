@@ -1,34 +1,36 @@
-# Candidate review checklist
+# Verification record
 
-## AI-assisted work
+What is verified, how, and what still needs a person. Claims elsewhere in the documentation rest on this
+page.
 
-The initial implementation, tests and ADR were generated with ChatGPT assistance. Review code and decisions personally before submitting. Do not claim independent reviewer approval, simulator testing, deployment or production usage until performed.
+## Automated on every push (Web CI)
 
-## Manual acceptance checklist (pending)
+| Check                  | What it proves                                                                                                                                                                         |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run format:check` | Consistent formatting (Prettier 3.6.2)                                                                                                                                                 |
+| 40 unit tests          | Geometry, ranking, coverage, normalization, catalog freshness and refresh, transport fallback and cancellation, controller lifecycle, translations, local server headers and allowlist |
+| 24 Playwright tests    | Privacy before consent, rounded coordinates, ordering, cancellation, recovery, map focus handling, hours, seasonal palette, local catalog with providers down, browser language        |
+| axe-core 4.10.3        | No violation of any WCAG 2.0–2.2 A/AA or best-practice rule, at any impact, in light, dark and Christmas themes (idle, results, details, map) and in Finnish and Swedish at 320 px     |
+| Keyboard test          | Tab order follows the page; every stop has a visible 3 px focus outline                                                                                                                |
+| Build                  | `dist/` contains only the published files                                                                                                                                              |
 
-- Start with no location permission and confirm no provider request occurs until explicit action.
-- Grant location permission; verify results with a known location and compare with an independent map.
-- Deny permission and select Turku or Helsinki; verify city centre is clearly indicated.
-- Simulate slow network, HTTP error, empty response and cancellation; verify stale results never reappear.
-- Switch EN/FI/SV before and during a search; review copy with native speakers.
-- Use keyboard and screen reader (web), or VoiceOver and large Dynamic Type (iOS).
-- Check small screens, high contrast, zoom and dark mode where supported.
-- Verify map links, opening-hours disclaimer, and OSM attribution.
-- Inspect network requests to confirm rounded coordinates only, no analytics, and no personal secrets.
-- Run GitHub Actions; verify build and test results; perform human code review before applying.
+## Automated on a schedule or on demand
 
-## Known gaps
+- **Catalog acquisition** (Mondays 03:23 UTC): downloads, filters, validates and publishes the Finland extract.
+- **Production smoke** (Mondays 05:41 UTC): both deployed catalog routes are valid, identical and fresh.
+- **Real catalog in a browser**: every city returns named results with both live providers blocked.
 
-No live provider smoke test, independent accessibility audit or production-grade availability guarantees. iOS full compilation needs Apple SDK. Do not represent these checks as passed until verified.
+## Needs a person
 
-Web browser tests now exist with mocked network responses; execution is tracked in CI. They do not replace live provider or manual accessibility checks.
+- [ ] Screen reader pass: NVDA with Firefox and VoiceOver with Safari. Status announcements after search,
+      cancellation and errors; the map panel's heading and close button; language switching.
+- [ ] Zoom to 200 % and 400 %, and the WCAG 1.4.12 text-spacing bookmarklet, on desktop.
+- [ ] Windows contrast themes (forced colors).
+- [ ] Physical phone: location permission prompt, denial, and a known location compared with an independent
+      map.
+- [ ] Native speakers review the Finnish and Swedish copy.
+- [ ] After the first scheduled publication: a bot commit on `main`, a Vercel deployment, and a green
+      production smoke.
 
-## Release gate
-
-Review source, run unit and mocked browser tests, review generated screenshots, then verify real Overpass and map availability, keyboard/screen-reader usability and pharmacy hours. Do not claim WCAG conformance or verified schedules from these checks alone.
-
-## UX review — three source passes
-
-1. Journey: reduce post-search visual competition; progressive result disclosure; retry and independent directory on provider errors.
-2. Hierarchy: concise mobile header, preserve Finnish contour identity only before results, distance caveat beside results.
-3. Accessibility: explicit expanded state, keyboard focus on change location/cancel, native details disclosure. Added deterministic tests. Live provider remains a separate gate.
+Automated accessibility tools find only part of WCAG failures, so none of the checks above is a claim of
+conformance.

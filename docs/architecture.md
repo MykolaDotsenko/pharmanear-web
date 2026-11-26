@@ -1,29 +1,58 @@
 # Architecture
 
-The browser app deliberately uses native ES modules, HTML and CSS; it has no UI framework or runtime dependencies.
+The app is native ES modules, HTML and CSS with no framework and no runtime dependencies. A page that finds a
+pharmacy does not need more, and every dependency it avoids is one less thing to audit, update or ship.
 
-- `app.js`: DOM presentation and event binding; holds only language, map and expansion UI state.
-- `search-controller.js`: application state and lifetime of the current operation. Injected transport and geolocation; stale operations cannot publish.
-- `core.js`: deterministic search geometry, normalization, ranking and map URLs.
-- `provider.js`: HTTP transport, timeout, cancellation and status handling.
-- `strings.js`: translated copy, separate from control flow.
+## Modules and dependency direction
 
-Dependencies point inward from UI to controller and domain; transport is injected, not a singleton. No persistence of user coordinates, no global event bus, no unnecessary framework.
+```
+app.js ──► search-controller.js ──► core.js
+   │                ▲
+   └──► catalog.js ─┴──► provider.js
+   └──► strings.js
+```
 
-References: [MDN modules](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules), [Fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch), [AbortController](https://developer.mozilla.org/en-US/docs/Web/API/AbortController), [Node test runner](https://nodejs.org/api/test.html).
+- **`core.js`** is pure: geometry, OSM element validation, deterministic ranking, the search coverage rule and
+  map URLs. No DOM, no network, no clock.
+- **`provider.js`** owns HTTP to Overpass: a 12 s timeout, cancellation through `AbortSignal`, and at most one
+  independent fallback for transient failures. HTTP 403 and 429 are never retried elsewhere.
+- **`catalog.js`** is the lookup policy: the bundled national snapshot first, a newer published snapshot when
+  the bundled one is older than seven days, live Overpass only when the catalog cannot serve the area.
+- **`search-controller.js`** owns the lifetime of one search. Starting, replacing or cancelling a search aborts
+  the previous one, and a superseded operation can never publish. It publishes one frozen state object per
+  change. Transport and geolocation are injected, so it is tested without a browser.
+- **`app.js`** renders that state and binds events. It holds only presentation state: language, expanded list
+  and the open map.
+- **`strings.js`** holds all copy; a unit test keeps the three languages' keys identical.
 
-Unit tests exercise the controller without a browser and transport without real network requests. Playwright exercises the actual UI. Live provider availability is a separate gate and was previously unsuccessful; this refactor does not claim to resolve provider downtime.
+Dependencies point inward, from the UI to the controller and the domain. There is no global store, event bus
+or persistence of coordinates.
 
-## Domain invariants
+## Search and coverage
 
-Named helpers isolate coordinate validation, OSM element conversion, deterministic ranking and search coverage. Coverage is relative to mapped points, not all real pharmacies. Keep the native ES module boundaries rather than introduce a framework or another abstraction. See [MDN JavaScript modules](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules) and [AbortSignal](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal).
+Live search queries a coordinate rounded to two decimals and ranks results by distance from the precise
+position, which never leaves the device. A radius proves the nearest mapped pharmacy only if that pharmacy is
+closer than the radius minus the rounding offset; otherwise the search widens. The national catalog contains
+every mapped pharmacy, so any result it returns within 30 km is proven nearest. Coverage is always relative to
+OpenStreetMap, not to the official register.
 
-## Remaining provider risk
+## Catalog freshness
 
-Both live endpoints failed in the real-browser smoke test. A dated, licensed Finnish OSM extract from Geofabrik is a candidate for an independently refreshed local snapshot; no snapshot is bundled until acquisition, coverage and attribution are verified. Do not substitute fixtures for production data.
+See [ADR 0002](0002-local-catalog-and-weekly-refresh.md). In short: the weekly workflow publishes a validated
+extract to `main`, Vercel redeploys it, and a same-origin rewrite serves the newest copy to pages that are
+still running an older deployment. A snapshot older than 30 days is rejected.
 
-## Local catalog
+## Security headers
 
-`catalog.js` is the lookup policy: attempt a recent Finland extract locally, otherwise use the existing live provider. The static catalog is generated from the Geofabrik Finland PBF via Osmium, stores OSM object IDs, tags and point/area bounding-box centres, and is licensed ODbL 1.0. Its source date is visible in the UI. It does not claim complete coverage or current opening hours. A 30-day age limit prevents indefinite use of outdated data. No coordinates are sent for local lookup. The acquisition workflow is separate from runtime, and only validated real data may enter production. The catalog must be refreshed before expiry.
+`vercel.json` is the single source of the Content Security Policy and other headers. The local server reads
+the same file, so development and production cannot drift. `connect-src` allows only the site itself and the
+two Overpass endpoints; `frame-src` allows only the OpenStreetMap embed.
 
-Weekly catalog acquisition validates date and count before a trusted scheduled job updates only the data file on main. Vercel serves refreshed data through a fixed same-origin rewrite; clients with a snapshot older than seven days try that route for at most 2.5 seconds, falling back to their bundled catalog until its 30-day expiry. The first scheduled publication still needs verification. No user coordinates are included in refresh requests.
+## References
+
+- [JavaScript modules (MDN)](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules)
+- [Using the Fetch API (MDN)](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch) and
+  [AbortSignal (MDN)](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)
+- [Geolocation API (MDN)](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation_API)
+- [Content Security Policy (MDN)](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP)
+- [Node.js test runner](https://nodejs.org/api/test.html)
