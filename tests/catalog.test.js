@@ -32,3 +32,18 @@ test('cancelled catalog download never starts live lookup', async () => {
     live: () => assert.fail('live request'), now,
   }), { name: 'AbortError' });
 });
+
+test('an older valid catalog is replaced by a newer validated snapshot', async () => {
+ const old = {...catalog,sourceDate:'2026-11-17T00:00:00Z'};
+ const result = await lookupPharmacies(point,undefined,{load:async()=>old,refresh:async()=>catalog,now,live:()=>assert.fail('live')});
+ assert.equal(result.sourceDate,sourceDate);
+});
+test('refresh failure preserves still-valid catalog without live requests', async () => {
+ const old = {...catalog,sourceDate:'2026-11-17T00:00:00Z'};
+ const result = await lookupPharmacies(point,undefined,{load:async()=>old,refresh:async()=>{throw Error('offline')},now,live:()=>assert.fail('live')});
+ assert.equal(result.sourceDate,old.sourceDate);
+});
+test('malformed date triggers refresh rather than unnecessary live lookup',async()=>{
+ const result=await lookupPharmacies(point,undefined,{load:async()=>({...catalog,sourceDate:'bad'}),refresh:async()=>catalog,now,live:()=>assert.fail('live')});
+ assert.equal(result.sourceDate,sourceDate);
+});
