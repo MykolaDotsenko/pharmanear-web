@@ -2,6 +2,7 @@ import {test,expect} from '@playwright/test';
 const fixture={elements:[{type:'node',id:1,lat:60.47,lon:22.28,tags:{amenity:'pharmacy',name:'Far pharmacy'}},{type:'node',id:2,lat:60.452,lon:22.267,tags:{amenity:'pharmacy',name:'Near pharmacy','addr:street':'Example street'}}]};
 // Keep existing live-provider mocks independent of the production catalog.
 test.beforeEach(async ({ page }) => {
+  await page.route('**/data/current-finland-pharmacies.json', route => route.fulfill({ status: 404 }));
   await page.route('**/data/finland-pharmacies.json', route => route.fulfill({ status: 404 }));
 });
 const endpoint=/^https:\/\/(overpass-api\.de|overpass\.private\.coffee)\/api\/interpreter$/;
@@ -53,7 +54,7 @@ test('map requires explicit action and closes with restored focus',async({page})
 test('missing or unverified hours never become an open-now claim',async({page})=>{
  await page.route(endpoint,r=>fulfill(r,{elements:[{...fixture.elements[1],tags:{...fixture.elements[1].tags,opening_hours:'Mo-Fr 09:00-18:00'}},fixture.elements[0]]}));
  await page.goto('/');await page.locator('#search-label').click();
- await expect(page.locator('#list li').first()).toContainText('Mapped hours (unverified): Mo-Fr 09:00-18:00');
+ await expect(page.locator('#list li').first()).toContainText('Mapped hours (unverified)');
  await expect(page.locator('#list li').last()).toContainText('Hours not listed');
 });
 test('capture desktop and mobile screenshots with synthetic results',async({page},testInfo)=>{
@@ -80,7 +81,7 @@ test('task-first results progressively disclose more pharmacies',async({page})=>
  const rows=Array.from({length:8},(_,i)=>({type:'node',id:i+1,lat:60.4518+i*.0001,lon:22.2666,tags:{amenity:'pharmacy',name:'Pharmacy '+(i+1)}}));
  await page.route(endpoint,r=>fulfill(r,{elements:rows}));await page.goto('/');
  await page.locator('#search-label').click();await expect(page.locator('#list li')).toHaveCount(5);
- await expect(page.locator('.landscape')).toBeHidden();await expect(page.locator('#distance-note')).toBeVisible();
+ await expect(page.locator('.landscape')).toBeHidden();await page.locator('#result-details summary').click();await expect(page.locator('#distance-note')).toBeVisible();
  await page.getByRole('button',{name:'Show more pharmacies'}).click();await expect(page.locator('#list li')).toHaveCount(8);
  await page.getByRole('button',{name:'Show fewer pharmacies'}).click();await expect(page.locator('#list li')).toHaveCount(5);
  await page.getByRole('link',{name:'Change location'}).click();await expect(page.locator('#locate')).toBeFocused();
@@ -138,6 +139,18 @@ test('local catalog renders results while both live providers are unavailable',a
  await page.route('**/data/finland-pharmacies.json',route=>route.fulfill({json:{...fixture,schema:1,region:'FI',license:'ODbL-1.0',sourceDate:'2026-11-25T00:00:00Z'}}));
  await page.goto('/');await page.locator('#search-label').click();
  await expect(page.locator('#list li').first()).toContainText('Near pharmacy');
- await expect(page.locator('#status')).toContainText('OSM catalog date: 2026-11-25');
+ await page.locator('#result-details summary').click();
+ await expect(page.locator('#source-note')).toContainText('OSM catalog date: 2026-11-25');
  expect(liveRequests).toBe(0);
+});
+
+test('mobile search keeps details collapsed and preserves readable hours',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.emulateMedia({reducedMotion:'reduce'});
+ await page.route(endpoint,r=>fulfill(r,{elements:[{...fixture.elements[1],tags:{...fixture.elements[1].tags,opening_hours:'Mo-Fr 09:00-18:00; Sa 10:00-14:00'}}]}));
+ await page.goto('/');await page.locator('#search-label').click();
+ await expect(page.locator('#list li')).toHaveCount(1);
+ await expect(page.locator('#result-details')).not.toHaveAttribute('open','');
+ await expect(page.locator('.hours-value')).toHaveText('Mo-Fr 09:00-18:00 · Sa 10:00-14:00');
+ await page.locator('#result-details summary').click();await expect(page.locator('#distance-note')).toBeVisible();
 });

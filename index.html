@@ -65,8 +65,7 @@
       <div class="status-line"><span class="status-dot" aria-hidden="true"></span><p id="status" role="status" aria-live="polite" aria-atomic="true">Choose your location to start.</p></div>
       <div class="recovery" id="recovery" hidden><button id="retry" type="button" class="secondary">Try again</button><a id="fallback-directory" href="https://www.apteekki.fi/apteekkihaku" rel="noreferrer">Find a pharmacy on Apteekki.fi</a></div>
       <div id="loading-art" class="loading-art" aria-hidden="true" hidden><i></i><i></i><i></i></div>
-      <p id="distance-note" class="distance-note" hidden>Distances are straight-line estimates, not walking routes.</p>
-      <p id="map-disclosure" class="map-disclosure" hidden></p>
+      <details id="result-details" class="result-details" hidden><summary id="result-details-label">About these results</summary><p id="source-note"></p><p id="distance-note" class="distance-note">Distances are straight-line estimates, not walking routes.</p><p id="map-disclosure" class="map-disclosure"></p></details>
       <section id="map-panel" class="map-panel" aria-labelledby="map-heading" hidden>
         <div class="result-header"><h3 id="map-heading" tabindex="-1"></h3><button type="button" id="close-map" class="text-button">Close map</button></div>
         <p id="map-privacy"></p><div id="map-frame"></div>

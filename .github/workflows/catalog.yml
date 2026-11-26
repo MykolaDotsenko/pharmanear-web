@@ -1,5 +1,7 @@
 name: Acquire Finland pharmacy catalog
 on:
+  schedule:
+    - cron: '23 3 * * 1'
   workflow_dispatch:
   pull_request:
     paths:
@@ -37,3 +39,34 @@ jobs:
               print("CATALOG_ROW " + str(i) + " " + json.dumps(row, ensure_ascii=True, separators=(",", ":")))
           print("CATALOG_END " + str(len(data["elements"])))
           PY
+      - name: Validate freshness against existing snapshot
+        if: github.event_name == 'schedule'
+        run: |
+          git show HEAD:data/finland-pharmacies.json > /tmp/previous.json
+          python3 - <<'PY'
+          import json, datetime as dt
+          old=json.load(open('/tmp/previous.json'))
+          new=json.load(open('data/finland-pharmacies.json'))
+          assert new['sourceDate'] >= old['sourceDate']
+          assert len(new['elements']) >= len(old['elements'])*0.8
+          assert dt.datetime.now(dt.timezone.utc)-dt.datetime.fromisoformat(new['sourceDate'].replace('Z','+00:00')) < dt.timedelta(days=7)
+          PY
+  publish:
+    if: github.event_name == 'schedule' && github.ref == 'refs/heads/main'
+    needs: catalog
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: finland-pharmacy-catalog
+          path: data
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/finland-pharmacies.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Refresh Finnish pharmacy catalog"
+          git push origin HEAD:main

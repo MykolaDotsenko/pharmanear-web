@@ -153,3 +153,26 @@ body[data-season="christmas"] .winter-gold { stroke-width:2.2; }
   body[data-season="christmas"] .mark { color:#f0a9b5; }
   body[data-season="christmas"] .mark { border-color:#f0a9b5; }
 }
+
+/* Results-first, with details available without competing for attention. */
+.result-details{margin:.35rem 0 1rem;color:var(--muted);font-size:.83rem}
+.result-details summary{min-height:44px;align-content:center;cursor:pointer;color:var(--pine);text-decoration:underline;text-underline-offset:3px}
+.result-details summary:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+.result-details p{margin:.35rem 0 .65rem}
+#results-heading{scroll-margin-top:1rem}
+.hours-label,.hours-value{display:block}
+.hours-label{font-size:.74rem}
+.hours-value{color:var(--ink);font-variant-numeric:tabular-nums}
+.pharmacy.closest{border-left-width:4px}
+.pharmacy.closest h3{font-size:1.25rem}
+.pharmacy.closest .distance{font-size:1.75rem}
+@media(max-width:760px){
+ body[data-search-state="found"] .hero{padding:1rem 0 .85rem}
+ body[data-search-state="found"] .hero .eyebrow{display:none}
+ body[data-search-state="found"] h1{font-size:1.8rem;margin-bottom:.75rem}
+ body[data-search-state="found"] .privacy-details{margin:.15rem 0 .5rem}
+ body[data-search-state="found"] .results{padding-top:1rem}
+ .pharmacy{padding:.9rem .65rem;gap:.65rem}
+ .result-details{margin-bottom:.55rem}
+ .status-line{margin-bottom:.3rem}
+}
