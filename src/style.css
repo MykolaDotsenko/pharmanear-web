@@ -68,7 +68,7 @@ footer p{margin:0;max-width:65ch}.footer-mark{color:var(--pine);font-weight:750;
 .skip{position:absolute;top:-200px;left:1rem;background:var(--surface);padding:1rem;z-index:5}.skip:focus{top:0}
 [hidden]{display:none!important}
 @keyframes arrive{from{opacity:.4;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
-@keyframes row-in{from{opacity:.5;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+@keyframes row-in{from{transform:translateY(5px)}to{transform:translateY(0)}}
 @keyframes breathe{50%{opacity:.45}}
 @media(hover:hover){.primary:hover{filter:brightness(1.1);transform:translateY(-1px)}.secondary:hover{background:var(--wash)}.pharmacy a:hover{text-decoration-thickness:2px}}
 @media(max-width:760px){.shell{width:calc(100% - 2rem)}.masthead{min-height:74px}.hero{grid-template-columns:1fr;gap:1.8rem;padding:2.8rem 0 2rem}.landscape{aspect-ratio:2.6/1;max-height:210px}.hero-copy h1{max-width:14ch}footer{grid-template-columns:auto minmax(0,1fr)}footer a{grid-column:2}}
