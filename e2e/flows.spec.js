@@ -566,18 +566,27 @@ test.describe("today's opening hours", () => {
   });
 });
 
-test('on a phone both actions share one line and the rank number is left out', async ({ page }) => {
+test('on a phone the actions share one line and nothing widens the page', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.route(endpoint, route => fulfill(route, fixture));
   await page.goto('/');
-  await page.locator('#language').selectOption('fi');
   await page.locator('#search-label').click();
   const row = page.locator('#list li').first();
+  // Same row: the two boxes overlap vertically.
   const preview = await row.locator('.map-preview').boundingBox();
   const link = await row.locator('a').boundingBox();
-  expect(Math.abs(preview.y - link.y)).toBeLessThan(2);
+  expect(link.y).toBeLessThan(preview.y + preview.height);
+  expect(preview.y).toBeLessThan(link.y + link.height);
   await expect(row.locator('.rank')).toBeHidden();
+
+  // Longer labels may wrap with wider fonts, but never past the edge of a 320 px screen.
+  await page.setViewportSize({ width: 320, height: 700 });
+  for (const language of ['fi', 'sv']) {
+    await page.locator('#language').selectOption(language);
+    await expect(page.locator('html')).toHaveAttribute('lang', language);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  }
 });
 
 test('the results read as a structured list to assistive technology', async ({ page }) => {
@@ -609,4 +618,32 @@ test('the results read as a structured list to assistive technology', async ({ p
       - paragraph:
         - link "Check Finnish pharmacy details at Apteekki.fi"
   `);
+});
+
+test('a second tap cancels a pending audio resume', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-12-20T12:00:00Z'));
+  await page.addInitScript(() => {
+    let release;
+    window.releaseAudio = () => release();
+    window.audioStarts = 0;
+    window.AudioContext = class {
+      resume() {
+        return new Promise(resolve => {
+          release = resolve;
+        });
+      }
+      createGain() {
+        window.audioStarts++;
+        throw new Error('Cancelled audio must not create nodes');
+      }
+    };
+  });
+  await page.goto('/');
+  const melody = page.getByRole('button', { name: 'Christmas melody' });
+  await melody.click();
+  await expect(melody).toHaveAttribute('aria-pressed', 'true');
+  await melody.click();
+  await expect(melody).toHaveAttribute('aria-pressed', 'false');
+  await page.evaluate(() => window.releaseAudio());
+  await expect.poll(() => page.evaluate(() => window.audioStarts)).toBe(0);
 });

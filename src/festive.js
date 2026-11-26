@@ -324,8 +324,12 @@ export function createMelody({ onEnd = () => {} } = {}) {
   let audio = null;
   let output = null;
   let timer = 0;
+  let generation = 0;
+  let starting = false;
 
   function stop() {
+    generation++;
+    starting = false;
     clearTimeout(timer);
     if (!output) return;
     const fading = output;
@@ -336,12 +340,20 @@ export function createMelody({ onEnd = () => {} } = {}) {
 
   return {
     get playing() {
-      return output !== null;
+      return starting || output !== null;
     },
     async play() {
       stop();
-      audio ??= new AudioContext();
-      await audio.resume();
+      const attempt = generation;
+      starting = true;
+      try {
+        audio ??= new AudioContext();
+        await audio.resume();
+      } finally {
+        if (attempt === generation) starting = false;
+      }
+      // Turned off while the audio was still starting: nothing is scheduled.
+      if (attempt !== generation) return;
       const start = audio.currentTime + 0.05;
       output = scheduleMelody(audio, audio.destination, { start });
       timer = setTimeout(
@@ -380,7 +392,7 @@ export function setUpSeason({ garland, snowButton, melodyButton, canvas, reduced
     try {
       await melody.play();
     } catch {
-      melodyButton.setAttribute('aria-pressed', 'false');
+      melodyButton.setAttribute('aria-pressed', String(melody.playing));
     }
   });
 }

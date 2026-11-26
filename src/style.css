@@ -983,7 +983,7 @@ body[data-outcome] h1 {
   height: 12px;
   border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
   background: var(--accent);
-  animation: twinkle 2.6s ease-in-out infinite;
+  animation: twinkle 2.6s ease-in-out 1;
 }
 .garland-bulbs i:nth-child(3n + 2) {
   background: var(--gold);
@@ -1245,7 +1245,7 @@ body[data-outcome] h1 {
   }
 }
 @media (max-width: 560px) {
-  /* The rank is decorative (the order says it); dropping it gives the two actions one line. */
+  /* The rank is decorative (the order says it); dropping it gives the two actions room to share a line. */
   .pharmacy {
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
@@ -1264,6 +1264,8 @@ body[data-outcome] h1 {
   .pharmacy.closest .distance {
     font-size: 1.3rem;
   }
+  /* Both actions share a line whenever they fit; long labels in a wide font wrap to a second line rather
+     than widen the page. */
   .pharmacy-action {
     flex-direction: row;
     flex-wrap: wrap;
