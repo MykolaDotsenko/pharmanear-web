@@ -19,3 +19,6 @@ The initial implementation, tests and ADR were generated with ChatGPT assistance
 No live provider smoke test, independent accessibility audit or production-grade availability guarantees. iOS full compilation needs Apple SDK. Do not represent these checks as passed until verified.
  
 Web browser tests now exist with mocked network responses; execution is tracked in CI. They do not replace live provider or manual accessibility checks.
+
+## Release gate
+Review source, run unit and mocked browser tests, review generated screenshots, then verify real Overpass and map availability, keyboard/screen-reader usability and pharmacy hours. Do not claim WCAG conformance or verified schedules from these checks alone.
