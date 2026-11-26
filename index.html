@@ -28,7 +28,7 @@
           <span id="locate-label">Use my location</span><span class="button-arrow" aria-hidden="true">↗</span>
         </button>
         <details class="privacy-details"><summary id="privacy-summary">Location privacy</summary><p class="privacy" id="privacy">Catalog search runs on your device without sending your location. For live search, only a location rounded to 2 decimal places is sent to OpenStreetMap Overpass providers (FOSSGIS or Private.coffee). Distances are calculated on your device.</p></details>
-        <form id="city-form"><label for="city" id="city-label">Or search from a city centre</label><div class="form-row"><select id="city" required><option>Turku</option><option>Helsinki</option><option>Tampere</option><option>Oulu</option><option>Vaasa</option></select><button type="submit" class="secondary" id="search-label">Search</button></div></form>
+        <form id="city-form"><label for="city" id="city-label">Or search from a city centre</label><div class="form-row"><select id="city" required><option value="Turku">Turku</option><option value="Helsinki">Helsinki</option><option value="Tampere">Tampere</option><option value="Oulu">Oulu</option><option value="Vaasa">Vaasa</option></select><button type="submit" class="secondary" id="search-label">Search</button></div></form>
       </div>
       <div class="landscape" aria-hidden="true">
         <svg viewBox="0 0 440 450" preserveAspectRatio="xMidYMid slice" fill="none">
@@ -71,7 +71,7 @@
         <p id="map-privacy"></p><div id="map-frame"></div>
       </section>
       <ol id="list" aria-label="Pharmacies by distance"></ol>
-      <div class="result-tools" id="result-tools" hidden><button type="button" id="show-all" class="secondary"></button><a id="change-location" href="#heading">Change location</a></div>
+      <div class="result-tools" id="result-tools" hidden><button type="button" id="show-all" class="secondary" aria-controls="list" aria-expanded="false"></button><a id="change-location" href="#heading">Change location</a></div>
       <p class="directory-link"><a id="directory" href="https://www.apteekki.fi/apteekkihaku" rel="noreferrer">Check Finnish pharmacy details at Apteekki.fi</a></p>
     </section>
   </main>
