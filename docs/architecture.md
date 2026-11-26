@@ -19,3 +19,6 @@ Named helpers isolate coordinate validation, OSM element conversion, determinist
 
 ## Remaining provider risk
 Both live endpoints failed in the real-browser smoke test. A dated, licensed Finnish OSM extract from Geofabrik is a candidate for an independently refreshed local snapshot; no snapshot is bundled until acquisition, coverage and attribution are verified. Do not substitute fixtures for production data.
+
+## Local catalog
+`catalog.js` is the lookup policy: attempt a recent Finland extract locally, otherwise use the existing live provider. The static catalog is generated from the Geofabrik Finland PBF via Osmium, stores OSM object IDs, tags and point/area bounding-box centres, and is licensed ODbL 1.0. Its source date is visible in the UI. It does not claim complete coverage or current opening hours. A 30-day age limit prevents indefinite use of outdated data. No coordinates are sent for local lookup. The acquisition workflow is separate from runtime, and only validated real data may enter production. The catalog must be refreshed before expiry.
