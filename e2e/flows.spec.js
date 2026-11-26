@@ -104,8 +104,12 @@ test('missing or unverified hours never become an open-now claim', async ({ page
   );
   await page.goto('/');
   await page.locator('#search-label').click();
-  await expect(page.locator('#list li').first()).toContainText('Mapped hours (unverified)');
-  await expect(page.locator('#list li').last()).toContainText('Hours not listed');
+  await expect(page.locator('#list li').first()).toContainText('Opening hours');
+  await expect(page.locator('#list li').last()).toContainText('Opening hours unavailable');
+  await expect(page.locator('#hours-disclosure')).toContainText('OpenStreetMap');
+  await expect(
+    page.locator('#list li').last().getByRole('link', { name: 'Check opening hours' }),
+  ).toBeVisible();
 });
 test('capture desktop and mobile screenshots with synthetic results', async ({ page }, testInfo) => {
   await page.route(endpoint, r => fulfill(r, fixture));
@@ -547,7 +551,7 @@ test.describe("today's opening hours", () => {
       await page.goto('/');
       await page.locator('#search-label').click();
       await expect(page.locator('.hours-rule.today')).toHaveText(marked);
-      await expect(page.locator('#list li').first()).toContainText('Mapped hours (unverified)');
+      await expect(page.locator('#list li').first()).toContainText('Opening hours');
     });
   }
 
@@ -575,7 +579,7 @@ test('on a phone the actions share one line and nothing widens the page', async 
   const row = page.locator('#list li').first();
   // Same row: the two boxes overlap vertically.
   const preview = await row.locator('.map-preview').boundingBox();
-  const link = await row.locator('a').boundingBox();
+  const link = await row.locator('.pharmacy-action a').boundingBox();
   expect(link.y).toBeLessThan(preview.y + preview.height);
   expect(preview.y).toBeLessThan(link.y + link.height);
   await expect(row.locator('.rank')).toBeHidden();
@@ -604,13 +608,15 @@ test('the results read as a structured list to assistive technology', async ({ p
           - paragraph: Closest mapped result
           - heading "Near pharmacy" [level=3]
           - paragraph: Example street
-          - paragraph: Mapped hours (unverified) Mon–Fri 09:00–18:00 today · Sat 10:00–14:00 · Public holidays closed
+          - paragraph: Opening hours Mon–Fri 09:00–18:00 today · Sat 10:00–14:00 · Public holidays closed
           - text: 31 m
           - 'button "Map preview: Near pharmacy"'
           - 'link "Open in OpenStreetMap: Near pharmacy"'
         - listitem:
           - heading "Far pharmacy" [level=3]
-          - paragraph: Hours not listed
+          - paragraph: Address not listed
+          - paragraph: Opening hours unavailable
+          - link "Check opening hours"
           - text: 2.2 km
           - 'button "Map preview: Far pharmacy"'
           - 'link "Open in OpenStreetMap: Far pharmacy"'

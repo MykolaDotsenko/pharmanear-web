@@ -24,7 +24,7 @@ const copy = {
     disclaimer:
       'Straight-line direction only, not a walking route. Live location stays on this device while the radar is open.',
     map: 'Open in OpenStreetMap',
-    unnamed: 'Unnamed pharmacy',
+    unnamed: 'Pharmacy — name unavailable',
     directions: ['North', 'North-east', 'East', 'South-east', 'South', 'South-west', 'West', 'North-west'],
     relative: [
       'Ahead',
@@ -57,7 +57,7 @@ const copy = {
     offscale: 'Kohde on tutkan kantaman ulkopuolella.',
     disclaimer: 'Suunta linnuntietä, ei kävelyreitti. Sijainti pysyy laitteellasi tutkan ollessa auki.',
     map: 'Avaa OpenStreetMapissa',
-    unnamed: 'Nimetön apteekki',
+    unnamed: 'Apteekki — nimi puuttuu',
     directions: ['Pohjoinen', 'Koillinen', 'Itä', 'Kaakko', 'Etelä', 'Lounas', 'Länsi', 'Luode'],
     relative: [
       'Suoraan',
@@ -91,7 +91,7 @@ const copy = {
     disclaimer:
       'Riktning fågelvägen, inte en gångväg. Din position stannar på enheten medan radarn är öppen.',
     map: 'Öppna i OpenStreetMap',
-    unnamed: 'Namnlöst apotek',
+    unnamed: 'Apotek — namn saknas',
     directions: ['Norr', 'Nordost', 'Öster', 'Sydost', 'Söder', 'Sydväst', 'Väster', 'Nordväst'],
     relative: [
       'Rakt fram',
