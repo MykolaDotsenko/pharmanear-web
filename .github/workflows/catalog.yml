@@ -14,6 +14,10 @@ on:
       - '.github/workflows/catalog.yml'
 permissions:
   contents: read
+# One acquisition per ref at a time, so two publications can never race on main.
+concurrency:
+  group: catalog-${{ github.ref }}
+  cancel-in-progress: false
 jobs:
   catalog:
     runs-on: ubuntu-24.04
@@ -63,7 +67,10 @@ jobs:
     permissions:
       contents: write
     steps:
+      # Commit on top of the latest main, not the commit that started the run.
       - uses: actions/checkout@v4
+        with:
+          ref: main
       - uses: actions/download-artifact@v4
         with:
           name: finland-pharmacy-catalog

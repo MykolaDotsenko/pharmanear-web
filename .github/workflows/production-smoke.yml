@@ -1,5 +1,8 @@
 name: Production pharmacy data smoke
 on:
+  # Two hours after the weekly catalog publication (Mondays 03:23 UTC) and its Vercel deployment.
+  schedule:
+    - cron: '41 5 * * 1'
   workflow_dispatch:
   pull_request:
     paths:
@@ -12,22 +15,36 @@ jobs:
     timeout-minutes: 3
     steps:
       - name: Check published snapshots
+        env:
+          # After a scheduled publication both routes must serve the new extract.
+          AFTER_PUBLICATION: ${{ github.event_name == 'schedule' }}
         run: |
           set -euo pipefail
           curl --fail --location --max-time 25 https://pharmanear-web.vercel.app/data/finland-pharmacies.json -o /tmp/bundled.json
           curl --fail --location --max-time 25 https://pharmanear-web.vercel.app/data/current-finland-pharmacies.json -o /tmp/current.json
           python3 - <<'PY'
-          import datetime as dt, json, math
+          import datetime as dt, json, math, os
+          after_publication = os.environ['AFTER_PUBLICATION'] == 'true'
+          max_age = dt.timedelta(days=2 if after_publication else 30)
+
           def verify(path):
-              data=json.load(open(path))
-              assert data['schema']==1 and data['region']=='FI' and data['license']=='ODbL-1.0'
-              rows=data['elements']
+              data = json.load(open(path))
+              assert data['schema'] == 1 and data['region'] == 'FI' and data['license'] == 'ODbL-1.0'
+              rows = data['elements']
               assert 300 <= len(rows) <= 3000
-              assert len({(r['type'],r['id']) for r in rows})==len(rows)
-              assert all(math.isfinite(r['lat']) and math.isfinite(r['lon']) and r['tags']['amenity']=='pharmacy' for r in rows)
-              date=dt.datetime.fromisoformat(data['sourceDate'].replace('Z','+00:00'))
-              assert -dt.timedelta(days=1) <= dt.datetime.now(dt.timezone.utc)-date <= dt.timedelta(days=30)
+              assert len({(r['type'], r['id']) for r in rows}) == len(rows)
+              assert all(
+                  math.isfinite(r['lat']) and math.isfinite(r['lon']) and r['tags']['amenity'] == 'pharmacy'
+                  for r in rows
+              )
+              date = dt.datetime.fromisoformat(data['sourceDate'].replace('Z', '+00:00'))
+              age = dt.datetime.now(dt.timezone.utc) - date
+              assert -dt.timedelta(days=1) <= age <= max_age, f'{path} is {age} old'
               print(path, len(rows), data['sourceDate'])
               return date
-          assert verify('/tmp/current.json') >= verify('/tmp/bundled.json')
+
+          bundled, current = verify('/tmp/bundled.json'), verify('/tmp/current.json')
+          assert current >= bundled
+          if after_publication:
+              assert current == bundled, 'Vercel has not deployed the published catalog'
           PY
