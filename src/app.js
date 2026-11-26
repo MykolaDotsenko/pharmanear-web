@@ -20,44 +20,143 @@ const controller = createSearchController({
 });
 let state = controller.state;
 
-function renderUX(){
- const {status,result:data}=state;
- const copy=ux[lang];for(const [id,key] of Object.entries({'privacy-summary':'privacySummary',retry:'retry','fallback-directory':'fallback','distance-note':'distanceNote','change-location':'changeLocation'}))$(id).textContent=copy[key];
- const failed=['error','denied','empty'].includes(status),found=status==='found';
- $('recovery').hidden=!failed;
- $('directory').parentElement.hidden=failed;$('retry').hidden=!state.canRetry||status==='denied'||status==='empty';
- $('distance-note').hidden=!found;$('result-tools').hidden=!found;
- $('show-all').hidden=!found||data.results.length<=initialLimit;
- $('show-all').textContent=expanded?copy.showLess:copy.showAll;
- $('show-all').setAttribute('aria-expanded',String(expanded));
- $('show-all').setAttribute('aria-controls','list');
- document.body.dataset.searchState=status;
+function renderUX() {
+  const { status, result } = state;
+  const copy = ux[lang];
+  const labels = {
+    'privacy-summary': 'privacySummary',
+    retry: 'retry',
+    'fallback-directory': 'fallback',
+    'distance-note': 'distanceNote',
+    'change-location': 'changeLocation',
+  };
+  for (const [id, key] of Object.entries(labels)) $(id).textContent = copy[key];
+
+  const failed = ['error', 'denied', 'empty'].includes(status);
+  const found = status === 'found';
+  $('recovery').hidden = !failed;
+  $('directory').parentElement.hidden = failed;
+  $('retry').hidden = !state.canRetry || status === 'denied' || status === 'empty';
+  $('distance-note').hidden = !found;
+  $('result-tools').hidden = !found;
+  $('show-all').hidden = !found || result.results.length <= initialLimit;
+  $('show-all').textContent = expanded ? copy.showLess : copy.showAll;
+  $('show-all').setAttribute('aria-expanded', String(expanded));
+  $('show-all').setAttribute('aria-controls', 'list');
+  document.body.dataset.searchState = status;
 }
 
-function closeMap(restore=false){const id=selected?.id;selected=null;$('map-panel').hidden=true;$('map-frame').replaceChildren();if(restore&&id){[...document.querySelectorAll('[data-map-id]')].find(b=>b.dataset.mapId===id)?.focus();}}
-function openMap(p){selected=p;const frame=document.createElement('iframe');frame.src=embedUrl(p);frame.title=tr('mapTitle')+' '+(p.name||tr('unnamed'));frame.referrerPolicy='no-referrer';$('map-frame').replaceChildren(frame);$('map-panel').hidden=false;updateMapLabels();$('map-heading').focus();}
-function updateMapLabels(){ const {status}=state; $('close-map').textContent=tr('closeMap');$('map-privacy').textContent=tr('mapPrivacy');$('directory').textContent=tr('directory');$('map-disclosure').textContent=tr('mapPrivacy');$('map-disclosure').hidden=status!=='found';if(selected){const title=tr('mapTitle')+' '+(selected.name||tr('unnamed'));$('map-heading').textContent=title;const frame=$('map-frame').querySelector('iframe');if(frame)frame.title=title;}}
-function render(){
-  const {status,result:data,origin:originName}=state;
-  const section=document.querySelector('.results');
-  section.dataset.state=status;
+function closeMap(restore = false) {
+  const id = selected?.id;
+  selected = null;
+  $('map-panel').hidden = true;
+  $('map-frame').replaceChildren();
+  if (restore && id) {
+    [...document.querySelectorAll('[data-map-id]')].find(button => button.dataset.mapId === id)?.focus();
+  }
+}
+
+function openMap(pharmacy) {
+  selected = pharmacy;
+  const frame = document.createElement('iframe');
+  frame.src = embedUrl(pharmacy);
+  frame.referrerPolicy = 'no-referrer';
+  $('map-frame').replaceChildren(frame);
+  $('map-panel').hidden = false;
+  updateMapLabels();
+  $('map-heading').focus();
+}
+
+function updateMapLabels() {
+  $('close-map').textContent = tr('closeMap');
+  $('map-privacy').textContent = tr('mapPrivacy');
+  $('directory').textContent = tr('directory');
+  $('map-disclosure').textContent = tr('mapPrivacy');
+  $('map-disclosure').hidden = state.status !== 'found';
+  if (selected) {
+    const title = tr('mapTitle') + ' ' + (selected.name || tr('unnamed'));
+    $('map-heading').textContent = title;
+    const frame = $('map-frame').querySelector('iframe');
+    if (frame) frame.title = title;
+  }
+}
+
+function element(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+function distanceText(meters) {
+  const short = meters < 1000;
+  return new Intl.NumberFormat(lang, {
+    style: 'unit', unit: short ? 'meter' : 'kilometer',
+    maximumFractionDigits: short ? 0 : 1,
+  }).format(short ? meters : meters / 1000);
+}
+
+function pharmacyRow(pharmacy, index) {
+  const name = pharmacy.name || tr('unnamed');
+  const row = element('li', index === 0 ? 'pharmacy closest' : 'pharmacy');
+  const rank = element('span', 'rank', String(index + 1).padStart(2, '0'));
+  rank.setAttribute('aria-hidden', 'true');
+  const info = element('div', 'pharmacy-info');
+  if (index === 0) info.append(element('p', 'closest-label', tr('nearest')));
+  info.append(element('h3', '', name));
+  if (pharmacy.address) info.append(element('p', '', pharmacy.address));
+  info.append(element('p', 'hours', pharmacy.hours ? tr('hours') + ': ' + pharmacy.hours : tr('missingHours')));
+
+  const action = element('div', 'pharmacy-action');
+  const distance = element('span', 'distance', distanceText(pharmacy.distance));
+  const preview = element('button', 'map-preview', tr('mapHere'));
+  preview.type = 'button';
+  preview.dataset.mapId = pharmacy.id;
+  preview.setAttribute('aria-label', tr('mapHere') + ': ' + name);
+  preview.setAttribute('aria-describedby', 'map-disclosure');
+  preview.addEventListener('click', () => openMap(pharmacy));
+
+  const link = element('a', '', tr('map'));
+  link.href = mapsUrl(pharmacy);
+  link.rel = 'noreferrer';
+  link.setAttribute('aria-label', tr('map') + ': ' + name);
+  action.append(distance, preview, link);
+  row.append(rank, info, action);
+  return row;
+}
+
+function render() {
+  const { status, result, origin, busy } = state;
+  document.documentElement.lang = lang;
+  document.querySelector('.results').dataset.state = status;
   renderUX();
   updateMapLabels();
-  $('loading-art').hidden=!['loading','locating'].includes(status);
-  $('list').setAttribute('aria-busy',String(['loading','locating'].includes(status)));
-document.documentElement.lang=lang;const labels={'language-label':'language',eyebrow:'eyebrow',heading:'heading',intro:'intro','locate-label':'locate',privacy:'privacy','city-label':'city','search-label':'search','results-heading':'results',cancel:'cancel',disclaimer:'disclaimer'};for(const [id,k] of Object.entries(labels))$(id).textContent=tr(k);document.querySelector('.skip').textContent=tr('skip');$('list').setAttribute('aria-label',tr('results'));$('cancel').hidden=!state.busy;const list=$('list');list.replaceChildren();$('status').textContent=status==='found'?`${tr('found')}: ${data.results.length} · ${originName==='device'?tr('device'):originName}. ${data.covered?'':tr('limited')} ${data.results.length>20?tr('shown'):''}`:tr(status);if(status!=='found')return;for(const [i,p] of data.results.slice(0,expanded?20:initialLimit).entries()){
-    const li=document.createElement('li'), rank=document.createElement('span'), left=document.createElement('div'), h=document.createElement('h3'), dist=document.createElement('span'), address=document.createElement('p'), link=document.createElement('a');
-    li.className=i===0?'pharmacy closest':'pharmacy';
-    rank.className='rank';rank.textContent=String(i+1).padStart(2,'0');rank.setAttribute('aria-hidden','true');
-    left.className='pharmacy-info';
-    if(i===0){const note=document.createElement('p');note.className='closest-label';note.textContent=tr('nearest');left.append(note);}
-    h.textContent=p.name||tr('unnamed');left.append(h);
-    if(p.address){address.textContent=p.address;left.append(address);}
-    const hours=document.createElement('p');hours.className='hours';hours.textContent=p.hours?tr('hours')+': '+p.hours:tr('missingHours');left.append(hours);
-    dist.className='distance';dist.textContent=new Intl.NumberFormat(lang,{style:'unit',unit:p.distance<1000?'meter':'kilometer',maximumFractionDigits:p.distance<1000?0:1}).format(p.distance<1000?p.distance:p.distance/1000);
-    link.href=mapsUrl(p);link.rel='noreferrer';link.textContent=tr('map');link.setAttribute('aria-label',`${tr('map')}: ${h.textContent}`);
-    const action=document.createElement('div');action.className='pharmacy-action';const preview=document.createElement('button');preview.type='button';preview.className='map-preview';preview.textContent=tr('mapHere');preview.dataset.mapId=p.id;preview.setAttribute('aria-label',tr('mapHere')+': '+h.textContent);preview.setAttribute('aria-describedby','map-disclosure');preview.addEventListener('click',()=>openMap(p));action.append(dist,preview,link);
-    li.append(rank,left,action);list.append(li);
+
+  const labels = {
+    'language-label': 'language', eyebrow: 'eyebrow', heading: 'heading',
+    intro: 'intro', 'locate-label': 'locate', privacy: 'privacy',
+    'city-label': 'city', 'search-label': 'search', 'results-heading': 'results',
+    cancel: 'cancel', disclaimer: 'disclaimer',
+  };
+  for (const [id, key] of Object.entries(labels)) $(id).textContent = tr(key);
+  document.querySelector('.skip').textContent = tr('skip');
+  $('loading-art').hidden = !busy;
+  $('cancel').hidden = !busy;
+
+  const list = $('list');
+  list.setAttribute('aria-busy', String(busy));
+  list.setAttribute('aria-label', tr('results'));
+  list.replaceChildren();
+
+  if (status !== 'found') {
+    $('status').textContent = tr(status);
+    return;
+  }
+  const locationName = origin === 'device' ? tr('device') : origin;
+  const notes = [result.covered ? '' : tr('limited'), result.results.length > 20 ? tr('shown') : ''].filter(Boolean);
+  $('status').textContent = tr('found') + ': ' + result.results.length + ' · ' + locationName + '. ' + notes.join(' ');
+  for (const [index, pharmacy] of result.results.slice(0, expanded ? 20 : initialLimit).entries()) {
+    list.append(pharmacyRow(pharmacy, index));
   }
 }
 
