@@ -13,9 +13,16 @@ const controller = createSearchController({
   lookup: lookupPharmacies,
   geolocation: navigator.geolocation,
   onChange(next) {
+    const wasBusy = state.busy;
     state = next;
     if (next.busy) { expanded = false; closeMap(); }
     render();
+    if (wasBusy && next.status === 'found' && matchMedia('(max-width: 760px)').matches) {
+      // Keep keyboard focus with the control the user activated.
+      if (!document.activeElement?.matches(':focus-visible')) {
+        $('results-heading').scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+      }
+    }
   },
 });
 let state = controller.state;
@@ -37,7 +44,8 @@ function renderUX() {
   $('recovery').hidden = !failed;
   $('directory').parentElement.hidden = failed;
   $('retry').hidden = !state.canRetry || status === 'denied' || status === 'empty';
-  $('distance-note').hidden = !found;
+  $('result-details').hidden = !found;
+  $('result-details-label').textContent = copy.resultDetails;
   $('result-tools').hidden = !found;
   $('show-all').hidden = !found || result.results.length <= initialLimit;
   $('show-all').textContent = expanded ? copy.showLess : copy.showAll;
@@ -72,7 +80,7 @@ function updateMapLabels() {
   $('map-privacy').textContent = tr('mapPrivacy');
   $('directory').textContent = tr('directory');
   $('map-disclosure').textContent = tr('mapPrivacy');
-  $('map-disclosure').hidden = state.status !== 'found';
+  
   if (selected) {
     const title = tr('mapTitle') + ' ' + (selected.name || tr('unnamed'));
     $('map-heading').textContent = title;
@@ -105,7 +113,11 @@ function pharmacyRow(pharmacy, index) {
   if (index === 0) info.append(element('p', 'closest-label', tr('nearest')));
   info.append(element('h3', '', name));
   if (pharmacy.address) info.append(element('p', '', pharmacy.address));
-  info.append(element('p', 'hours', pharmacy.hours ? tr('hours') + ': ' + pharmacy.hours : tr('missingHours')));
+  const hours = element('p', 'hours');
+  if (pharmacy.hours) {
+    hours.append(element('span', 'hours-label', tr('hours')), element('span', 'hours-value', pharmacy.hours.split(';').map(part => part.trim()).join(' · ')));
+  } else { hours.textContent = tr('missingHours'); }
+  info.append(hours);
 
   const action = element('div', 'pharmacy-action');
   const distance = element('span', 'distance', distanceText(pharmacy.distance));
@@ -155,7 +167,8 @@ function render() {
   const locationName = origin === 'device' ? tr('device') : origin;
   const sourceNote = result.source === 'catalog' ? tr('catalogDate') + ': ' + result.sourceDate.slice(0, 10) : '';
   const notes = [sourceNote, result.covered ? '' : tr('limited'), result.results.length > 20 ? tr('shown') : ''].filter(Boolean);
-  $('status').textContent = tr('found') + ': ' + result.results.length + ' · ' + locationName + '. ' + notes.join(' ');
+  $('source-note').textContent = notes.join(' ');
+  $('status').textContent = result.results.length + ' ' + ux[lang].resultCount + ' · ' + locationName;
   for (const [index, pharmacy] of result.results.slice(0, expanded ? 20 : initialLimit).entries()) {
     list.append(pharmacyRow(pharmacy, index));
   }
