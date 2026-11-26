@@ -116,3 +116,6 @@ body[data-season="christmas"] .winter-gold{stroke:var(--winter-gold)}
 body[data-season="christmas"] .winter-snow{stroke:var(--winter-snow);opacity:.88}
 body[data-season="christmas"] .masthead{border-bottom-color:var(--winter-gold)}
 @media(prefers-color-scheme:dark){body[data-season="christmas"]{--winter-gold:#d4b478;--winter-snow:#d9e5df}}
+
+/* Keep seasonal details in the visible crop of the compact mobile artwork. */
+@media(max-width:760px){body[data-season="christmas"] .winter-pines{transform:translateY(-160px)}body[data-season="christmas"] .winter-gold{transform:translateY(100px)}body[data-season="christmas"] .winter-snow{transform:translateY(-150px)}}
