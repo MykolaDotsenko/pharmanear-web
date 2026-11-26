@@ -4,14 +4,21 @@ export function requestCompass() {
   const api = globalThis.DeviceOrientationEvent;
   if (typeof api?.requestPermission !== 'function') return Promise.resolve(Boolean(api));
   try {
-    return api.requestPermission(true).then(value => value === 'granted', () => false);
+    return api.requestPermission(true).then(
+      value => value === 'granted',
+      () => false,
+    );
   } catch {
     return Promise.resolve(false);
   }
 }
 
 // Each session owns its own watch and listeners. No samples leave this module except to its view.
-export function createRadarSession({ onChange, geo = navigator.geolocation, compass = Promise.resolve(false) }) {
+export function createRadarSession({
+  onChange,
+  geo = navigator.geolocation,
+  compass = Promise.resolve(false),
+}) {
   let closed = false;
   let watch = null;
   let generation = 0;
@@ -27,7 +34,13 @@ export function createRadarSession({ onChange, geo = navigator.geolocation, comp
   let wake = null;
   let waking = false;
   const publish = () => {
-    if (!closed) onChange({ position, status, heading: heading ?? motion, mode: heading !== null ? 'compass' : motion !== null ? 'motion' : 'north' });
+    if (!closed)
+      onChange({
+        position,
+        status,
+        heading: heading ?? motion,
+        mode: heading !== null ? 'compass' : motion !== null ? 'motion' : 'north',
+      });
   };
   async function holdScreen() {
     if (closed || document.hidden || wake || waking || !position) return;
@@ -37,7 +50,9 @@ export function createRadarSession({ onChange, geo = navigator.geolocation, comp
       if (closed || document.hidden) await lock?.release();
       else {
         wake = lock;
-        lock?.addEventListener('release', () => { if (wake === lock) wake = null; });
+        lock?.addEventListener('release', () => {
+          if (wake === lock) wake = null;
+        });
       }
     } catch {
       // Wake lock is optional.
@@ -76,38 +91,60 @@ export function createRadarSession({ onChange, geo = navigator.geolocation, comp
       return;
     }
     const run = ++generation;
-    watch = geo.watchPosition(fix => {
-      if (closed || run !== generation || document.hidden) return;
-      const { latitude: lat, longitude: lon, accuracy, speed, heading: course } = fix.coords;
-      if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180 || !Number.isFinite(accuracy) || accuracy < 0) return;
-      const next = { lat, lon, accuracy, timestamp: fix.timestamp };
-      const fresh = anchor && Math.abs(next.timestamp - anchor.timestamp) <= 15000;
-      const direction = Number.isFinite(course) && Number.isFinite(speed) && speed >= 0.5 && accuracy <= 30 ? degrees(course) : fresh ? movementHeading(anchor, next) : null;
-      if (!fresh || direction !== null) anchor = next;
-      if (direction !== null) {
-        motion = smoothHeading(motion, direction, 0.32);
-        motionAt = Date.now();
-        clearTimeout(timer);
-        timer = setTimeout(() => { if (Date.now() - motionAt >= 15000) { motion = null; publish(); } }, 15000);
-      }
-      position = next;
-      status = 'active';
-      clearTimeout(fixTimer);
-      fixTimer = setTimeout(() => {
-        status = 'stale';
+    watch = geo.watchPosition(
+      fix => {
+        if (closed || run !== generation || document.hidden) return;
+        const { latitude: lat, longitude: lon, accuracy, speed, heading: course } = fix.coords;
+        if (
+          !Number.isFinite(lat) ||
+          !Number.isFinite(lon) ||
+          Math.abs(lat) > 90 ||
+          Math.abs(lon) > 180 ||
+          !Number.isFinite(accuracy) ||
+          accuracy < 0
+        )
+          return;
+        const next = { lat, lon, accuracy, timestamp: fix.timestamp };
+        const fresh = anchor && Math.abs(next.timestamp - anchor.timestamp) <= 15000;
+        const direction =
+          Number.isFinite(course) && Number.isFinite(speed) && speed >= 0.5 && accuracy <= 30
+            ? degrees(course)
+            : fresh
+              ? movementHeading(anchor, next)
+              : null;
+        if (!fresh || direction !== null) anchor = next;
+        if (direction !== null) {
+          motion = smoothHeading(motion, direction, 0.32);
+          motionAt = Date.now();
+          clearTimeout(timer);
+          timer = setTimeout(() => {
+            if (Date.now() - motionAt >= 15000) {
+              motion = null;
+              publish();
+            }
+          }, 15000);
+        }
+        position = next;
+        status = 'active';
+        clearTimeout(fixTimer);
+        fixTimer = setTimeout(() => {
+          status = 'stale';
+          publish();
+        }, 15000);
         publish();
-      }, 15000);
-      publish();
-      void holdScreen();
-    }, error => {
-      if (closed || run !== generation) return;
-      if (error.code === 1) {
-        stopWatch();
-        position = null;
-        status = 'denied';
-      } else status = position ? 'stale' : 'unavailable';
-      publish();
-    }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 1500 });
+        void holdScreen();
+      },
+      error => {
+        if (closed || run !== generation) return;
+        if (error.code === 1) {
+          stopWatch();
+          position = null;
+          status = 'denied';
+        } else status = position ? 'stale' : 'unavailable';
+        publish();
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 1500 },
+    );
   }
   function visibility() {
     if (document.hidden) {
@@ -119,14 +156,18 @@ export function createRadarSession({ onChange, geo = navigator.geolocation, comp
   window.addEventListener('deviceorientationabsolute', orientation);
   window.addEventListener('deviceorientation', orientation);
   document.addEventListener('visibilitychange', visibility);
-  compass.then(allowed => { if (!closed) compassAllowed = allowed; });
+  compass.then(allowed => {
+    if (!closed) compassAllowed = allowed;
+  });
   start();
-  return { close() {
-    closed = true;
-    stopWatch();
-    position = null;
-    window.removeEventListener('deviceorientationabsolute', orientation);
-    window.removeEventListener('deviceorientation', orientation);
-    document.removeEventListener('visibilitychange', visibility);
-  } };
+  return {
+    close() {
+      closed = true;
+      stopWatch();
+      position = null;
+      window.removeEventListener('deviceorientationabsolute', orientation);
+      window.removeEventListener('deviceorientation', orientation);
+      document.removeEventListener('visibilitychange', visibility);
+    },
+  };
 }
